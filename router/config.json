@@ -1,0 +1,103 @@
+{
+  "_note": "Router settings. Model lists come live from OpenCode; this file only holds policy (exclusions, defaults, limits).",
+
+  "opencode_cli": "/Applications/OpenCode.app/Contents/Resources/opencode-cli",
+  "_workspace_note": "Folder the models work in. Kept OUTSIDE priority-brain/ (moved 2026-11-05): the Claude CLI and OpenCode load CLAUDE.md files from the working folder and its parents, so a folder inside priority-brain/ made models act as if they were building the brain.",
+  "workspace": "~/.local/share/priority-brain-router/workspace",
+  "_agent_note": "OpenCode agent for every router run. Without one, runs fell back to OpenCode's built-in plan agent (the global config makes 'build' a subagent), which adds a 'You are in Plan mode' reminder turn after the answer. The router writes this agent into the workspace's opencode.json.",
+  "opencode_agent": "router",
+  "_skills_note": "Skills hidden from router runs: OpenCode lists ~/.claude/skills in its own skill tool (hidden by the skill deny rule in permissions), and Claude lists them too (hidden by skillOverrides in the workspace .claude/settings.local.json). prompt-optimizer says to run on every message; router tasks never need it (Morgan, 2026-11-05).",
+  "claude_skills_off": ["prompt-optimizer", "anthropic-skills:prompt-optimizer"],
+  "auto_approve_tools": false,
+
+  "classifier": {
+    "providerID": "opencode",
+    "id": "jev-1.13-free",
+    "yes_threshold": 0.5
+  },
+
+  "free_provider": "opencode",
+  "excluded_models": [
+    "opencode/beam-free",
+    "opencode/flint-40b-free",
+    "opencode/mimo-v2.6-flash-free",
+    "opencode/pulse-alpha-free",
+    "opencode/nemotron-3.5-lightning-free",
+    "opencode/nemotron-3.5-super-vl-free",
+    "ollama/*"
+  ],
+  "excluded_families": ["fable", "mythos"],
+  "exclude_fast_variants": true,
+
+  "claude_provider": "claude-code",
+  "_max_tier_note": "Highest Claude tier the router may use (Morgan, 2026-11-10: Sonnet, not Opus). Opus decisions and @opus tags run on Sonnet at high effort.",
+  "max_tier": "sonnet",
+  "tier_families": { "haiku": "haiku", "sonnet": "sonnet", "opus": "opus" },
+  "fallback_multipliers": { "haiku": 0.1, "sonnet": 2, "opus": 4 },
+
+  "default_effort": {
+    "free": null,
+    "haiku": "low",
+    "sonnet": "medium",
+    "opus": "high"
+  },
+  "effort_levels": ["low", "medium", "high", "xhigh", "max"],
+  "tag_only_efforts": ["xhigh", "max"],
+
+  "free_max_attempts": 3,
+  "attempt_timeout_seconds": {
+    "free": 120,
+    "haiku": 300,
+    "sonnet": 900,
+    "opus": 1200
+  },
+
+  "_stall_note": "Stop a run that prints nothing for this many seconds after it starts (OpenCode stalled before the model began). Separate from the per-tier timeouts above.",
+  "stall_seconds": 90,
+
+  "free_model_hints": {
+    "pdf": ["crouton-alpha-free"],
+    "video": ["crouton-alpha-free"],
+    "image": ["crouton-alpha-free"]
+  },
+
+  "audit": { "first_week_days": 7, "sample_every": 5 },
+
+  "usage_warn_limits": {
+    "five_hour_units": null,
+    "today_units": null,
+    "week_units": null
+  },
+
+  "shortcut_max_chars": 160,
+
+  "_permissions_note": "OpenCode session rules for every router run (later rules win). Paths inside the working folder are matched as relative paths, outside ones as absolute, so the edit denies fence edits to the folder. Reads stay open (Morgan's no-privacy-rule decision) except .env files. Shell rules block deletion and history-rewriting commands; shell is not a full sandbox, so the folder snapshot/rollback stays as the second line.",
+  "permissions": [
+    { "action": "*", "resource": "*", "effect": "allow" },
+    { "action": "read", "resource": "*.env", "effect": "deny" },
+    { "action": "read", "resource": "*.env.*", "effect": "deny" },
+    { "action": "edit", "resource": "opencode.json", "effect": "deny" },
+    { "action": "edit", "resource": ".claude/*", "effect": "deny" },
+    { "action": "skill", "resource": "prompt-optimizer", "effect": "deny" },
+    { "action": "edit", "resource": "/*", "effect": "deny" },
+    { "action": "edit", "resource": "../*", "effect": "deny" },
+    { "action": "edit", "resource": "~*", "effect": "deny" },
+    { "action": "shell", "resource": "rm *", "effect": "deny" },
+    { "action": "shell", "resource": "* rm *", "effect": "deny" },
+    { "action": "shell", "resource": "*;rm *", "effect": "deny" },
+    { "action": "shell", "resource": "rmdir *", "effect": "deny" },
+    { "action": "shell", "resource": "* rmdir *", "effect": "deny" },
+    { "action": "shell", "resource": "*unlink *", "effect": "deny" },
+    { "action": "shell", "resource": "*find * -delete*", "effect": "deny" },
+    { "action": "shell", "resource": "sudo *", "effect": "deny" },
+    { "action": "shell", "resource": "* sudo *", "effect": "deny" },
+    { "action": "shell", "resource": "git push*", "effect": "deny" },
+    { "action": "shell", "resource": "*git push*", "effect": "deny" },
+    { "action": "shell", "resource": "*git reset --hard*", "effect": "deny" },
+    { "action": "shell", "resource": "*git clean*", "effect": "deny" },
+    { "action": "shell", "resource": "*git checkout -- *", "effect": "deny" },
+    { "action": "shell", "resource": "*> /*", "effect": "deny" },
+    { "action": "shell", "resource": "*> ~*", "effect": "deny" },
+    { "action": "shell", "resource": "*> ../*", "effect": "deny" }
+  ]
+}

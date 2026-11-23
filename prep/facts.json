@@ -1,0 +1,203 @@
+{
+ "confirmed": true,
+ "note": "Source: Resume_Morgan_White_General.pdf (Morgan, 2026-11-22). Only what that resume says; tools named in its project and experience lines count as skills.",
+ "contact": {
+  "name": "Morgan White",
+  "line": "Atlanta, GA · linkedin.com/in/morgan-white-26059a205 · github.com/morganwhite-dev"
+ },
+ "education": [
+  {
+   "school": "Georgia State University, J. Mack Robinson College of Business",
+   "date": "In Progress, Expected May 2027",
+   "degree": "Master of Science in Information Systems (MSIS), Concentration in Cybersecurity",
+   "extra": "Current coursework: Offensive Hacking"
+  },
+  {
+   "school": "Georgia State University",
+   "date": "July 2026",
+   "degree": "Bachelor of Arts in Film & Media",
+   "extra": ""
+  }
+ ],
+ "certifications": [
+  "IT Security Foundations: Core Concepts (LinkedIn Learning)",
+  "Python Essential Training (LinkedIn Learning)",
+  "Python Statistics Essential Training (LinkedIn Learning)",
+  "Certified Offensive AI Security Professional (COASP) (In Progress)",
+  "CompTIA Network+ (In Progress)",
+  "AWS Academy Cloud Architecting",
+  "FAA Part 107 Certified Drone Pilot"
+ ],
+ "skills": [
+  "anomaly and pattern based detection logic",
+  "risk assessment",
+  "evidence based flagging",
+  "security fundamentals",
+  "offensive hacking coursework",
+  "penetration testing",
+  "log analysis",
+  "threat detection",
+  "Python",
+  "JavaScript",
+  "TypeScript",
+  "HTML",
+  "CSS",
+  "Swift",
+  "SQL",
+  "PostgreSQL",
+  "Next.js",
+  "FastAPI",
+  "Scapy",
+  "Kali Linux",
+  "Git",
+  "GitHub",
+  "VS Code",
+  "Microsoft Copilot",
+  "GenAI tools",
+  "Anthropic API",
+  "AI agents",
+  "unit testing",
+  "AWS",
+  "technical documentation",
+  "teamwork",
+  "stakeholder communication",
+  "deadline management"
+ ],
+ "experience": [
+  {
+   "id": "networkwalks",
+   "title": "Cybersecurity Intern",
+   "org": "NetworkWalks",
+   "date": "October 2026 to November 2026",
+   "bullets": [
+    {
+     "id": "nw1",
+     "text": "Perform hands on penetration testing using Kali Linux to identify security weaknesses."
+    },
+    {
+     "id": "nw2",
+     "text": "Analyze company logs for suspicious activity and security events."
+    },
+    {
+     "id": "nw3",
+     "text": "Document each finding in a structured written report."
+    }
+   ]
+  },
+  {
+   "id": "grantflow",
+   "title": "Co-Founder",
+   "org": "GrantFlow AI (beta testing)",
+   "date": "September 2025 to Present",
+   "bullets": [
+    {
+     "id": "gf1",
+     "text": "Built an AI grant writing web app for small nonprofits using AI coding tools: nearly 20,000 lines of code, 35 pages, 57 API routes."
+    },
+    {
+     "id": "gf2",
+     "text": "Designed the database in SQL with 22 tables, plus a searchable database of 65,977 private foundations across all states."
+    },
+    {
+     "id": "gf3",
+     "text": "Secured the app with 33 row level security policies and an 11 page admin console with owner, partner, and reviewer roles and a log of every admin view and change."
+    },
+    {
+     "id": "gf4",
+     "text": "Designed the full UI and UX and set up 62 automated tests."
+    }
+   ]
+  },
+  {
+   "id": "drone",
+   "title": "Freelance Drone Pilot",
+   "org": "",
+   "date": "2018 to Present",
+   "bullets": [
+    {
+     "id": "dp1",
+     "text": "Run client engagements independently under FAA Part 107 certification, from planning to delivery, for eight plus years."
+    }
+   ]
+  }
+ ],
+ "projects": [
+  {
+   "id": "traffic",
+   "name": "Network Traffic Analyzer",
+   "stack": "Python, FastAPI, Scapy",
+   "tag": "",
+   "bullets": [
+    {
+     "id": "na1",
+     "text": "Built a real time network traffic analyzer for Mac with a live dashboard, 3D network map, bandwidth flows, and packet inspector."
+    },
+    {
+     "id": "na2",
+     "text": "Added 10 threat detectors for port scans, ARP spoofing, unencrypted passwords, DNS tunneling, and VPN leaks, plus a Wi-Fi check for signal, network, or provider slowdowns."
+    },
+    {
+     "id": "na3",
+     "text": "Open sourced on GitHub: root only to start capture, new login token every launch, 61 tests, CI, and CodeQL with 0 open alerts."
+    }
+   ]
+  },
+  {
+   "id": "recallrunner",
+   "name": "Recall Runner",
+   "stack": "TypeScript, Next.js, PostgreSQL, PayPal API",
+   "tag": "PayPal AI Hackathon 2026",
+   "bullets": [
+    {
+     "id": "rr1",
+     "text": "Built an AI agent with the Anthropic API that matches real CPSC product recalls to a merchant's PayPal orders, investigates with read only tools, drafts checked buyer notices, and settles refunds, replacements, and repairs through the PayPal sandbox."
+    },
+    {
+     "id": "rr2",
+     "text": "Deployed on Render with a Neon Postgres database; 24 of 24 automated tests pass, including 8 that test the AI."
+    }
+   ]
+  },
+  {
+   "id": "fraud",
+   "name": "Fraud Detection Engine",
+   "stack": "Python, JavaScript",
+   "tag": "",
+   "bullets": [
+    {
+     "id": "fd1",
+     "text": "Built a fraud detection engine that cross references sender, reply to address, and bank details across an email, PDF invoice, and vendor record to flag mismatches common in business email compromise."
+    },
+    {
+     "id": "fd2",
+     "text": "Assigns a risk level with cited evidence and a reviewer checklist; covered by unit tests, never auto approves a payment."
+    }
+   ]
+  }
+ ],
+ "banned_terms": [
+  "Microsoft Office",
+  "Excel",
+  "Power BI",
+  "ServiceNow",
+  "Security+",
+  "Azure",
+  "Copilot Studio",
+  "red team",
+  "red teaming",
+  "professional penetration",
+  "Broken Leg",
+  "SIEM experience",
+  "CISSP",
+  "CEH"
+ ],
+ "letter_facts": [
+  "Graduate student in the Cybersecurity concentration of the MSIS program at Georgia State, graduating May 2027.",
+  "Cybersecurity intern at NetworkWalks (October to November 2026): penetration testing with Kali Linux, log analysis, written findings.",
+  "Built and open sourced a real time Network Traffic Analyzer with 10 threat detectors.",
+  "Built Recall Runner for the PayPal AI Hackathon 2026.",
+  "Built a fraud detection engine that flags business email compromise mismatches with cited evidence.",
+  "Co-founded GrantFlow AI: 22 table SQL database with 33 row level security policies.",
+  "Portfolio at morgan-white.vercel.app and github.com/morganwhite-dev."
+ ]
+}

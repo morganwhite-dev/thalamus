@@ -1,0 +1,13 @@
+<defs>
+<linearGradient id="cy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6fe3ff"/><stop offset="1" stop-color="#b9f4ff"/></linearGradient>
+<linearGradient id="tube" gradientUnits="userSpaceOnUse" x1="176" y1="0" x2="252" y2="0"><stop offset="0" stop-color="#8fe9ff"/><stop offset="1" stop-color="#e4fbff"/></linearGradient>
+<radialGradient id="gold" cx="0.38" cy="0.32" r="0.8"><stop offset="0" stop-color="#ffe9a0"/><stop offset="0.45" stop-color="#e9b83c"/><stop offset="1" stop-color="#b88418"/></radialGradient>
+</defs>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M10 128 C4 80 30 24 86 24 C132 24 138 82 182 82" stroke="url(#cy)" stroke-width="20"/>
+<ellipse cx="62" cy="84" rx="22" ry="34" transform="rotate(8 62 84)" stroke="url(#cy)" stroke-width="14"/>
+<path d="M176 82 H252" stroke="url(#tube)" stroke-width="18"/>
+<path d="M12 120 C8 82 32 30 84 28" stroke="#fff" stroke-width="4" opacity="0.45" transform="translate(4 -1)"/>
+</g>
+<circle cx="262" cy="82" r="30" fill="url(#gold)"/>
+<ellipse cx="252" cy="70" rx="9" ry="6" fill="#fff" opacity="0.55" transform="rotate(-30 252 70)"/>

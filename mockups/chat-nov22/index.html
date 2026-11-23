@@ -1,0 +1,78 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Thalamus chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#05061a;--ink:#eceef8;--s1:#a8afcc;--s2:#8a92b4;--line:#2a3358;--cyan:#2ee6ff;--violet:#a78bfa;--ok:#4ade80;--amber:#fbbf24;--mono:'JetBrains Mono',monospace}
+body{margin:0;font:14px Inter,sans-serif;color:var(--ink)}
+.cap{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--s2);margin:0 0 6px 4px}
+.scr{position:relative;width:960px;height:570px;overflow:hidden;border-radius:14px;background:var(--bg);margin-bottom:18px}
+.scr img{position:absolute;top:0;left:0;width:960px}
+.scr .cover{position:absolute;left:0;right:0;top:500px;bottom:0;background:var(--bg)}
+.scr .cover2{position:absolute;left:0;right:0;top:505px;height:20px;background:var(--bg)}
+/* closed: one text line, no buttons */
+.prompt{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);width:380px;height:38px;display:flex;align-items:center;gap:10px;padding:0 16px;border:1px solid rgba(42,51,88,.9);border-radius:10px;background:rgba(8,10,32,.72);backdrop-filter:blur(14px);font:13px var(--mono);color:var(--s2)}
+.prompt b{color:var(--cyan);font-weight:400}.prompt kbd{margin-left:auto;font:11px var(--mono);color:var(--s2);opacity:.7}
+.prompt::before,.chat::before{content:"";position:absolute;left:18px;right:18px;top:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(46,230,255,.6) 25%,rgba(167,139,250,.6) 75%,transparent)}
+/* open: conversation panel */
+.chat{position:absolute;right:20px;bottom:16px;width:400px;height:480px;display:flex;flex-direction:column;border:1px solid rgba(42,51,88,.9);border-radius:14px;background:rgba(8,10,32,.86);backdrop-filter:blur(18px);box-shadow:0 30px 60px -20px #000}
+.ch{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(42,51,88,.6);font:500 10.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--s2)}
+.ch span{margin-left:auto;letter-spacing:.06em;text-transform:none;font-size:11px;opacity:.7}
+.msgs{flex:1;overflow:hidden;padding:12px 16px;display:flex;flex-direction:column;gap:10px;justify-content:flex-end;-webkit-mask-image:linear-gradient(transparent,#000 60px);mask-image:linear-gradient(transparent,#000 60px)}
+.me{align-self:flex-end;max-width:80%;padding:7px 11px;border-radius:10px 10px 2px 10px;background:rgba(46,230,255,.08);border:1px solid rgba(46,230,255,.22);font-size:13px}
+.th{align-self:flex-start;max-width:88%;font-size:13px;line-height:1.5;color:var(--ink)}
+.th .t{display:block;font:10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--s2);margin-bottom:2px}
+.th .ok{color:var(--ok)}.th .s{color:var(--cyan)}.th .dim{color:var(--s2);font:11px var(--mono)}
+.in{display:flex;align-items:center;gap:10px;margin:0 12px 12px;height:40px;padding:0 14px;border:1px solid rgba(42,51,88,.9);border-radius:10px;background:rgba(0,0,0,.3);font:13px var(--mono);color:var(--s2)}
+.in b{color:var(--cyan);font-weight:400}.in .cur{display:inline-block;width:2px;height:15px;background:var(--cyan);margin-left:-6px}
+.sl{position:absolute;left:12px;right:12px;bottom:60px;padding:6px;border:1px solid rgba(42,51,88,.9);border-radius:10px;background:rgba(6,8,26,.98);box-shadow:0 -12px 30px -10px #000}
+.sl .h{font:500 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--s2);padding:6px 8px 4px}
+.sl .r{display:flex;flex-wrap:wrap;gap:0 12px;align-items:baseline;padding:5px 8px;border-radius:6px;font-size:12.5px}
+.sl .r b{font:500 12px var(--mono);color:var(--cyan);min-width:78px}.sl .r span{color:var(--s1)}
+.sl .r.on{background:rgba(46,230,255,.08)}.sl .r i{display:none}
+.sl .f{font:10.5px var(--mono);color:var(--s2);padding:6px 8px 2px;opacity:.8}
+.bar{position:absolute;left:0;right:0;top:0;height:85px;overflow:hidden}.bar img{position:absolute;left:0;top:0;width:960px}
+.stage{position:absolute;left:0;right:0;top:85px;bottom:0;overflow:hidden}
+.clip{position:absolute;left:var(--x);top:var(--y);width:calc(960px*var(--s));height:calc(385px*var(--s));overflow:hidden}.clip img{position:absolute;left:0;top:calc(-85px*var(--s));width:calc(960px*var(--s))}
+.stage .mask{position:absolute;left:0;right:0;top:0;height:22px;background:var(--bg)}
+.chat.b{left:50%;right:auto;transform:translateX(-50%);width:640px;height:220px}
+.chat.b .ch{padding:9px 16px}.chat.b .msgs{padding:8px 16px;gap:7px}
+.why{font:12px Inter;color:var(--s1);margin:0 0 8px 4px}
+</style></head><body>
+<div class="cap">Closed: brain only</div><div class="scr"><div class="stage" style="--x:0px;--y:20px;--s:1"><div class="clip"><img src="/Users/morguewhite/Desktop/Projects/priority-brain/mockups/chat-nov22/brain.png" alt=""></div></div><div class="bar"><img src="/Users/morguewhite/Desktop/Projects/priority-brain/mockups/chat-nov22/brain.png" alt=""></div><div class="prompt"><b>&gt;</b>talk to thalamus<kbd>/ to type</kbd></div></div>
+<div class="cap">Option A · chat on the right, brain slides left and shrinks a little</div>
+<div class="why">Nothing covered. Longer conversations fit.</div>
+<div class="scr"><div class="stage" style="--x:-40px;--y:105px;--s:0.64"><div class="clip"><img src="/Users/morguewhite/Desktop/Projects/priority-brain/mockups/chat-nov22/brain.png" alt=""></div></div><div class="bar"><img src="/Users/morguewhite/Desktop/Projects/priority-brain/mockups/chat-nov22/brain.png" alt=""></div><div class="chat"><div class="ch">Thalamus<span>today</span></div>
+<div class="msgs">
+<div class="me">what should i do now</div>
+<div class="th"><span class="t">thalamus</span>Read Chapter 6 <span class="s">(Network Security)</span>. It slipped past Thu, Nov 5. About 1 h 30 min; a 50 min block fits before class at 5:30.</div>
+<div class="me">snooze it 1 hour</div>
+<div class="th"><span class="t">thalamus</span><span class="ok">Snoozed until 2:31 PM.</span> Next up: Cyber Academy Tier 1 / Bandit.</div>
+<div class="me">remind me to email dr lee friday</div>
+<div class="th"><span class="t">thalamus</span>Add “Email Dr. Lee” to Personal, due Fri, Nov 27 at 12 PM?<br><span class="dim">say yes, or change the list or day</span></div>
+<div class="me">yes</div>
+<div class="th"><span class="t">thalamus</span><span class="ok">Added to Personal.</span> <span class="dim">“undo” takes it back for 2 min</span></div>
+</div>
+<div class="in"><b>&gt;</b><span class="cur"></span>&nbsp;</div></div></div>
+<div class="cap">Option B · short drawer from the bottom, brain shrinks up</div>
+<div class="why">Brain stays centred. Shows about 4 messages, scroll for more.</div>
+<div class="scr"><div class="stage" style="--x:176px;--y:0px;--s:0.62"><div class="clip"><img src="/Users/morguewhite/Desktop/Projects/priority-brain/mockups/chat-nov22/brain.png" alt=""></div></div><div class="bar"><img src="/Users/morguewhite/Desktop/Projects/priority-brain/mockups/chat-nov22/brain.png" alt=""></div><div class="chat b"><div class="ch">Thalamus<span>today</span></div><div class="msgs">
+<div class="me">remind me to email dr lee friday</div>
+<div class="th"><span class="t">thalamus</span>Add “Email Dr. Lee” to Personal, due Fri, Nov 27 at 12 PM? <span class="dim">say yes, or change the list or day</span></div>
+<div class="me">yes</div>
+<div class="th"><span class="t">thalamus</span><span class="ok">Added to Personal.</span> <span class="dim">“undo” takes it back for 2 min</span></div>
+</div><div class="in"><b>&gt;</b><span class="cur"></span>&nbsp;</div></div></div>
+<div class="cap">/ menu (shown in option A)</div><div class="scr"><div class="stage" style="--x:-40px;--y:105px;--s:0.64"><div class="clip"><img src="/Users/morguewhite/Desktop/Projects/priority-brain/mockups/chat-nov22/brain.png" alt=""></div></div><div class="bar"><img src="/Users/morguewhite/Desktop/Projects/priority-brain/mockups/chat-nov22/brain.png" alt=""></div><div class="chat"><div class="ch">Thalamus<span>today</span></div>
+<div class="msgs"><div class="me">what should i do now</div>
+<div class="th"><span class="t">thalamus</span>Read Chapter 6 <span class="s">(Network Security)</span>. About 1 h 30 min.</div></div>
+<div class="sl"><div class="h">You can say</div>
+<div class="r on"><b>/now</b><span>what to do next</span><i>what should i do now</i></div>
+<div class="r"><b>/due</b><span>what's due, late or coming up</span><i>whats due friday</i></div>
+<div class="r"><b>/add</b><span>add a task or reminder</span><i>remind me to email dr lee fri</i></div>
+<div class="r"><b>/done</b><span>finish, snooze, skip or pin a task</span><i>snooze it 3 hours</i></div>
+<div class="r"><b>/stuck</b><span>a five-minute first step</span><i>im stuck on lab 7</i></div>
+<div class="r"><b>/find</b><span>open notes, slides, files</span><i>teaching notes module 5</i></div>
+<div class="r"><b>/where</b><span>where I left off on a project</span><i>where was i on the analyzer</i></div>
+<div class="r"><b>/park</b><span>save an idea to Play</span><i>idea: golf stats tracker</i></div>
+<div class="r"><b>/prep</b><span>tailor resume (+ letter) for job links</span><i>prep: &lt;link&gt;</i></div>
+<div class="f">or just ask anything · plain words always work</div></div>
+<div class="in"><b>&gt;</b>/<span class="cur" style="margin-left:2px"></span></div></div></div>
+</body></html>

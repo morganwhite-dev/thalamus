@@ -1,0 +1,105 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Thalamus drawer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#05061a;--ink:#eceef8;--s1:#a8afcc;--s2:#8a92b4;--line:#2a3358;--cyan:#2ee6ff;--violet:#a78bfa;--ok:#4ade80;--mono:'JetBrains Mono',monospace;--ease:cubic-bezier(.22,.8,.24,1)}
+body{margin:0;font:14px Inter,sans-serif;color:var(--ink)}
+.scr{position:relative;width:960px;height:600px;overflow:hidden;border-radius:14px;background:var(--bg);margin:0 auto}
+.bar{position:absolute;left:0;right:0;top:0;height:85px;overflow:hidden;z-index:2}.bar img{position:absolute;left:0;top:0;width:960px}
+/* the brain: one layer that moves and scales as a whole */
+.brain{position:absolute;left:0;top:0;width:960px;height:385px;overflow:hidden;transform-origin:0 0;transform:translate(0px,105px) scale(1);transition:transform .65s var(--ease);will-change:transform}
+.brain img{position:absolute;left:0;top:-85px;width:960px}
+
+/* one element: the quiet line grows into the drawer */
+.box{position:absolute;left:50%;bottom:20px;width:380px;height:38px;transform:translateX(-50%);border:1px solid rgba(42,51,88,.9);border-radius:10px;background:rgba(8,10,32,.8);backdrop-filter:blur(16px);overflow:hidden;
+ transition:width .65s var(--ease),height .65s var(--ease),border-radius .65s var(--ease),box-shadow .65s;will-change:width,height;z-index:3}
+.box::before{content:"";position:absolute;left:18px;right:18px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(46,230,255,.6) 25%,rgba(167,139,250,.6) 75%,transparent)}
+.open .box{width:460px;border-radius:14px;box-shadow:0 30px 60px -20px #000}
+.idle{position:absolute;inset:0;display:flex;align-items:center;gap:10px;padding:0 16px;font:13px var(--mono);color:var(--s2);transition:opacity .25s .5s}
+.idle b{color:var(--cyan);font-weight:400}.idle kbd{margin-left:auto;font:11px var(--mono);opacity:.7}
+.open .idle{opacity:0;pointer-events:none;transition:opacity .12s}
+.conv{position:absolute;left:0;right:0;bottom:0;max-height:100%;display:flex;flex-direction:column;opacity:0;transition:opacity .12s}
+.open .conv{opacity:1;transition:opacity .3s .35s}
+.msgs{flex:1;overflow:hidden;padding:10px 14px 6px;display:flex;flex-direction:column;gap:5px;justify-content:flex-end}.box.full .msgs{-webkit-mask-image:linear-gradient(transparent,#000 40px);mask-image:linear-gradient(transparent,#000 40px)}
+.me{align-self:flex-end;max-width:80%;padding:4px 10px;border-radius:10px 10px 2px 10px;background:rgba(46,230,255,.08);border:1px solid rgba(46,230,255,.22);font-size:13px;animation:in .3s var(--ease)}
+.th{align-self:flex-start;max-width:92%;font-size:13px;line-height:1.4;padding:2px 0;animation:in .3s var(--ease)}
+.th .t{display:none;font:10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--s2);margin-bottom:1px}
+.th .ok{color:var(--ok)}.th .dim{color:var(--s2);font-size:12px}
+.tk{color:var(--ink);font-weight:500}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.in{display:flex;align-items:center;gap:8px;margin:0 8px 8px;height:34px;padding:0 13px;border:1px solid rgba(42,51,88,.9);border-radius:9px;background:rgba(0,0,0,.3);font:13px var(--mono);color:var(--ink)}
+.in b{color:var(--cyan);font-weight:400}.cur{display:inline-block;width:2px;height:15px;background:var(--cyan);animation:bl 1s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+/* the task flying into its node */
+.chip{position:absolute;z-index:4;display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;border:1px solid rgba(74,222,128,.55);background:rgba(10,30,22,.92);font:12px Inter;color:var(--ink);box-shadow:0 0 18px rgba(74,222,128,.45);white-space:nowrap;pointer-events:none}
+.chip i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.ring{position:absolute;z-index:4;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:2px solid var(--ok);pointer-events:none;animation:ring 1s var(--ease) forwards}
+@keyframes ring{from{transform:scale(.6);opacity:1}to{transform:scale(2.6);opacity:0}}
+.plus{position:absolute;z-index:4;font:600 13px var(--mono);color:var(--ok);text-shadow:0 0 10px var(--ok);pointer-events:none;animation:plus 1.4s var(--ease) forwards}
+@keyframes plus{from{transform:translate(-50%,-10px);opacity:0}25%{opacity:1}to{transform:translate(-50%,-44px);opacity:0}}
+.note{max-width:960px;margin:10px auto 0;font:11px var(--mono);color:var(--s2);letter-spacing:.04em}
+@media (prefers-reduced-motion: reduce){.brain,.box,.conv{transition:none}}
+</style></head><body>
+<div class="scr" id="scr">
+  <div class="brain" id="brain"><img src="brain.png" alt=""></div>
+  <div class="bar"><img src="brain.png" alt=""></div>
+  <div class="box" id="box">
+    <div class="idle"><b>&gt;</b>talk to thalamus<kbd>/ to type</kbd></div>
+    <div class="conv"><div class="msgs" id="msgs"></div><div class="in"><b>&gt;</b><span id="typed"></span><span class="cur"></span></div></div>
+  </div>
+</div>
+<div class="note">mockup · plays on a loop · the brain image is a screenshot, so its labels shrink here; in the real build dials keep full-size text</div>
+<script>
+const $=s=>document.querySelector(s), scr=$('#scr'), msgs=$('#msgs'), typed=$('#typed');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const DIAL={x:759,y:220};            // Personal dial, in brain-layer pixels
+function dialOnScreen(){ const m=new DOMMatrix($("#brain").style.transform||getComputedStyle($("#brain")).transform); return {x:m.a*DIAL.x+m.e, y:m.d*DIAL.y+m.f}; }
+async function type(text){ for(const ch of text){ typed.textContent+=ch; await sleep(45+Math.random()*40);} await sleep(350); }
+function add(cls,html){ const d=document.createElement('div'); d.className=cls; d.innerHTML=html; msgs.appendChild(d); return d; }
+async function send(text){ await type(text); typed.textContent=''; add('me',text); await sleep(600); }
+async function fly(fromEl,label){
+  const sr=scr.getBoundingClientRect(), fr=fromEl.getBoundingClientRect(), to=dialOnScreen();
+  const chip=document.createElement('div'); chip.className='chip'; chip.innerHTML='<i></i>'+label; scr.appendChild(chip);
+  const x0=fr.left-sr.left, y0=fr.top-sr.top, w=chip.offsetWidth/2, h=chip.offsetHeight/2;
+  const mx=(x0+to.x)/2, my=Math.min(y0,to.y)-70;   // arc up, then down into the node
+  await chip.animate([
+    {transform:`translate(${x0}px,${y0}px) scale(.9)`,opacity:0},
+    {transform:`translate(${x0}px,${y0-8}px) scale(1)`,opacity:1,offset:.15},
+    {transform:`translate(${mx-w}px,${my-h}px) scale(.9)`,offset:.6},
+    {transform:`translate(${to.x-w}px,${to.y-h}px) scale(.15)`,opacity:.2}
+  ],{duration:1300,easing:'cubic-bezier(.45,0,.25,1)',fill:'forwards'}).finished;
+  chip.remove();
+  const r=document.createElement('div'); r.className='ring'; r.style.left=to.x+'px'; r.style.top=to.y+'px'; scr.appendChild(r);
+  const p=document.createElement('div'); p.className='plus'; p.textContent='+1'; p.style.left=to.x+'px'; p.style.top=to.y+'px'; scr.appendChild(p);
+  setTimeout(()=>{r.remove();p.remove()},1500);
+}
+const MAXH=220, LINE=38, IN=44;          // drawer: input only when empty, grows to MAXH, then scrolls
+function layout(){
+  const open=scr.classList.contains('open'), box=$('#box');
+  let h=LINE;
+  if(open){ h=Math.min(MAXH, IN + (msgs.children.length? [...msgs.children].reduce((a,c)=>a+c.offsetHeight+5,12):0)); box.classList.toggle('full',h>=MAXH); }
+  box.style.height=h+'px';
+  const room=600-20-h-14-85, sc=Math.min(1,room/385)*(open?1:1), y=85+Math.max(0,(room-385*sc)/2)+(open?0:20);
+  $('#brain').style.transform=`translate(${480-487*sc}px,${y}px) scale(${sc})`;
+}
+function add2(cls,html){ const d=add(cls,html); layout(); return d; }
+async function send(text){ await type(text); typed.textContent=''; add2('me',text); await sleep(700); }
+async function run(){
+  for(;;){
+    msgs.innerHTML=''; typed.textContent=''; scr.classList.remove('open'); layout();
+    await sleep(1600);
+    scr.classList.add('open'); layout(); await sleep(900);
+    await send('remind me to email dr lee friday');
+    let d=add2('th','<span class="t">thalamus</span><span class="ok">Added</span> <span class="tk">“Email Dr. Lee”</span> to Personal, due Fri at 12 PM. <span class="dim">· undo to take it back</span>');
+    await sleep(250); await fly(d.querySelector('.ok'),'Email Dr. Lee'); await sleep(1300);
+    await send('add get groceries');
+    add2('th','<span class="t">thalamus</span>I’ll put <span class="tk">“Get groceries”</span> in Personal with no date. Sound right?');
+    await sleep(1100);
+    await send('yep');
+    d=add2('th','<span class="t">thalamus</span><span class="ok">Added it.</span>');
+    await sleep(250); await fly(d.querySelector('.ok'),'Get groceries'); await sleep(1800);
+    scr.classList.remove('open'); layout();
+    await sleep(2200);
+  }
+}
+run();
+</script></body></html>

@@ -1,0 +1,1341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thalamus · brain and nodes mockups</title>
+<!-- MOCKUP ONLY. Not part of the app, not loaded by dashboard/skin/build.py. Sample data; nothing here saves anything.
+     The brain and clusters are a cropped screenshot of the real app (last line of this file), not live. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['"JetBrains Mono"', 'ui-monospace', 'Menlo', 'monospace'] },
+  colors: { panel: '#0a0d22', line: '#2a3358', ink: '#eceef8', slate1: '#a8afcc', slate2: '#8a92b4', cyan: '#2ee6ff', violet: '#a78bfa', amber: '#fbbf24', ok: '#4ade80' }
+} } };
+</script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+<style>
+  html, body { background: #05061a; color-scheme: dark; height: 100%; margin: 0; overflow: hidden; }
+  @keyframes rise { from { opacity: 0; transform: translateY(5px) } to { opacity: 1; transform: none } }
+  .rise { animation: rise .18s ease-out; }
+  @keyframes blink { 50% { opacity: 0 } }
+  .caret { animation: blink 1.1s steps(1) infinite; }
+  .bar { transition: width .5s ease-out; }
+  @media (prefers-reduced-motion: reduce) { .rise, .caret { animation: none } .bar { transition: none } }
+  /* floating glass dock */
+  .dock-glass {
+    background: linear-gradient(180deg, rgba(30,38,86,.50) 0%, rgba(12,15,40,.62) 38%, rgba(7,9,26,.74) 100%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%);
+    border: 1px solid rgba(255,255,255,.10);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.16),          /* lit top edge */
+      inset 0 -1px 0 rgba(0,0,0,.45),               /* dark bottom edge */
+      inset 0 0 0 1px rgba(124,140,255,.05),
+      0 2px 6px rgba(0,0,0,.35),                    /* contact shadow */
+      0 28px 60px -18px rgba(0,0,0,.85),            /* lift shadow */
+      0 18px 70px -20px rgba(79,209,230,.22);       /* faint cyan glow underneath */
+  }
+  .dock-glass::before {                             /* thin sheen along the top */
+    content: ""; position: absolute; left: 26px; right: 26px; top: -1px; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(46,230,255,.55) 22%, rgba(167,139,250,.55) 70%, transparent);
+  }
+  .menu-glass {
+    background: linear-gradient(180deg, rgba(34,42,92,.78) 0%, rgba(13,16,42,.90) 45%, rgba(8,10,28,.94) 100%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%); backdrop-filter: blur(18px) saturate(150%);
+    border: 1px solid rgba(255,255,255,.11);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 2px 6px rgba(0,0,0,.4), 0 22px 44px -14px rgba(0,0,0,.85), 0 10px 40px -16px rgba(79,209,230,.25);
+  }
+  .menu-glass::before {
+    content: ""; position: absolute; left: 18px; right: 18px; top: -1px; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(46,230,255,.55) 25%, rgba(167,139,250,.55) 72%, transparent);
+  }
+  /* dock restyle "instrument": same layout and content, the brain's visual language */
+  .dock-v2 { border-radius: 16px !important; background: linear-gradient(180deg, rgba(28,36,84,.40) 0%, rgba(10,13,36,.60) 40%, rgba(6,8,24,.76) 100%); }
+  .dock-v2::before { left: 14px; right: 14px; opacity: .9; background: linear-gradient(90deg, transparent, var(--sec) 10%, rgba(255,226,170,.95) 50%, rgba(167,139,250,.6) 86%, transparent); }
+  .dock-v2::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(44% 85% at 50% 0%, rgba(255,214,150,.14), transparent 62%); animation: corelight 4.4s ease-in-out infinite; }
+  @keyframes corelight { 0%, 100% { opacity: .55 } 50% { opacity: 1 } }
+  .dock-v2 .card-left { position: relative; border-bottom-left-radius: 16px; background: linear-gradient(90deg, color-mix(in srgb, var(--sec) 9%, transparent), transparent 42%); }
+  .dock-v2 .card-left::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 2px; border-radius: 2px; background: var(--sec); box-shadow: 0 0 12px var(--sec); }
+  .dock-v2 .btn-primary, .dock-v2 .btn-ghost, .dock-v2 .btn-quiet { border-radius: 8px !important; font-family: "JetBrains Mono", monospace !important; text-transform: uppercase; letter-spacing: .12em; font-size: 12px !important; font-weight: 500 !important; padding-top: 11px !important; padding-bottom: 11px !important; }
+  .dock-v2 .btn-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--sec) 30%, transparent), color-mix(in srgb, var(--sec) 11%, transparent)) !important; color: #eefcff !important; border: 1px solid color-mix(in srgb, var(--sec) 78%, transparent); box-shadow: 0 0 20px color-mix(in srgb, var(--sec) 34%, transparent), inset 0 1px 0 rgba(255,255,255,.24); }
+  .dock-v2 .btn-primary:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--sec) 42%, transparent), color-mix(in srgb, var(--sec) 18%, transparent)) !important; }
+  .dock-v2 .btn-ghost { background: rgba(255,255,255,.02); }
+  .dock-v2 .note-pill { border-radius: 8px !important; border-left-width: 2px !important; }
+  .dock-v2 .pill { border-radius: 6px !important; font-family: "JetBrains Mono", monospace !important; font-size: 10.5px !important; text-transform: uppercase; letter-spacing: .1em; }
+  .dock-v2 .pill.chip { text-transform: none; letter-spacing: 0; font-size: 11.5px !important; }
+  .dock-v2 .cmd-field { border-radius: 10px !important; }
+  .dock-v2 .btn-send { border-radius: 7px !important; background: rgba(46,230,255,.14) !important; border: 1px solid rgba(46,230,255,.7); color: #dffaff !important; box-shadow: 0 0 14px rgba(46,230,255,.3), inset 0 1px 0 rgba(255,255,255,.2); opacity: 1 !important; }
+  .dock-v2 .rail-stop { border-radius: 8px !important; }
+  .dock-v2 .menu-glass { border-radius: 10px !important; }
+  .dock-v2 .menu-glass button { border-radius: 6px !important; }
+  @media (prefers-reduced-motion: reduce) { .dock-v2::after { animation: none } }
+  .dock-aura {                                      /* soft light behind the glass so it has something to blur */
+    position: absolute; left: 6%; right: 6%; top: -26px; bottom: -10px; border-radius: 50%; pointer-events: none; z-index: -1;
+    background: radial-gradient(60% 70% at 28% 40%, rgba(46,230,255,.26), transparent 70%), radial-gradient(55% 70% at 74% 55%, rgba(167,139,250,.30), transparent 70%);
+    filter: blur(38px); animation: aura 14s ease-in-out infinite alternate;
+  }
+  @keyframes floaty { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
+  @keyframes aura { from { transform: translateX(-3%) scale(1) } to { transform: translateX(3%) scale(1.06) } }
+  .dock-float { animation: floaty 8s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .dock-float, .dock-aura { animation: none } }
+  @keyframes spin { to { transform: rotate(360deg) } }
+  .spin { animation: spin 46s linear infinite; transform-origin: center; transform-box: fill-box; }
+  .spin-rev { animation: spin 30s linear infinite reverse; transform-origin: center; transform-box: fill-box; }
+  @media (prefers-reduced-motion: reduce) { .spin, .spin-rev { animation: none } }
+  .stage { -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 100%); mask-image: linear-gradient(to bottom, #000 82%, transparent 100%); }
+</style>
+</head>
+<body class="font-sans text-ink antialiased">
+<div id="root" class="h-full"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef } = React;
+
+/* ------------------------------------------------------------------ sample data */
+const SECTOR = { Schoolwork: '#2ee6ff', Internships: '#ff8a7a', 'Security Projects': '#a78bfa', Personal: '#4ade80' };
+const TASKS = [
+  { id: 1, title: 'Read Chapter 5', sector: 'Schoolwork', n: '01', est: '1 h 30 min', block: 30, when: 'slipped past Wed, Nov 4',
+    why: 'Still worth doing first, and it only takes one piece at a time.', more: 'You snoozed it earlier. It is past its deadline, so it came back to the top. Schoolwork ranks ahead of Internships when dates tie.',
+    stuck: 'First five minutes: open Chapter 5 and read only the headings. That counts.' },
+  { id: 2, title: 'Lab 9: Firewall rules', sector: 'Schoolwork', n: '01', est: '2 h', block: 50, when: 'due Thu, Nov 12 at 11:59 PM',
+    why: 'Nearest deadline after Chapter 5.', more: 'Network Security labs are estimated at 2 hours. One 50 minute block is a fine start.',
+    stuck: 'First five minutes: open the lab guide and log in to the lab. Nothing else yet.' },
+  { id: 3, title: 'Apply to 10 internships', sector: 'Internships', n: '02', est: '1 h', block: 50, when: 'due Sun, Nov 15',
+    why: '4 of 10 done this week.', more: 'Counted from your application tracker. Ranked below Schoolwork on the same day.',
+    stuck: 'First five minutes: open Handshake and save one posting. Just one.' },
+  { id: 4, title: 'Network traffic analyzer', sector: 'Security Projects', n: '04', est: '1 h', block: 50, when: 'no deadline',
+    why: 'Your one project in focus.', more: 'On Phase 2, parsing captures. Last touched 2 days ago.',
+    stuck: 'First five minutes: open the project and read your last commit message.' },
+];
+const TODAY = [   /* start and end are minutes since midnight */
+  { id: 'test', kind: 'Test', start: 1050, end: 1110, title: 'Cloud Platform and Infrastructure Security', note: 'Opens in iCollege. You log in yourself.' },
+  { id: 'class', kind: 'Class', start: 1050, end: 1215, title: 'Cloud Application Security', files: ['Week 11 slides', 'Week 11 teaching notes', 'Annotated deck', 'Lab 10 guide'] },
+];
+const fmtClock = (m) => ((Math.floor(m / 60) % 12) || 12) + ':' + String(m % 60).padStart(2, '0') + (m >= 720 ? ' PM' : ' AM');
+const dur = (m) => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '');
+const cap = (x) => x ? x[0].toUpperCase() + x.slice(1) : x;
+const EXAMPLES = ["what's due friday", 'remind me to call mom friday'];
+const SEED = [
+  ['3:44 PM', 'block', 'started: e-News 4, Business Continuity'],
+  ['3:54 PM', 'block', 'done: e-News 4, Business Continuity'],
+  ['3:54 PM', 'break', 'break started'],
+  ['3:58 PM', 'you', 'park this idea in playground: gianna’s bday python project'],
+  ['4:07 PM', 'break', 'break over'],
+  ['4:43 PM', 'check', 'did something for yourself: yes'],
+].map(([time, kind, text], i) => ({ id: i + 1, time, kind, text }));
+const LISTS = ['Personal', 'Network Security', 'Cloud Computing', 'Internships', 'Security Projects', 'Play'];
+
+const fmtTime = (d) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+const mmss = (s) => { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+
+/* ------------------------------------------------------------------ fake brain */
+function useBrain() {
+  const [queue, setQueue] = useState(TASKS);
+  const [pinned, setPinned] = useState(false);
+  const [mode, setMode] = useState({ k: 'idle' });           // idle | count | work | break
+  const [log, setLog] = useState(SEED);
+  const [busy, setBusy] = useState(null);                    // { label, pct } while a question runs
+  const [pending, setPending] = useState(null);              // add-a-task read-back waiting for a yes
+  const [followUp, setFollowUp] = useState(false);
+  const [answer, setAnswer] = useState(null);                // answer panel that takes over the log column
+  const [err, setErr] = useState(null);                      // a question that did not finish
+  const [lastCheckin, setLastCheckin] = useState(null);
+  const [undo, setUndo] = useState(null);                    // title of the last Done, undoable for 2 minutes
+  const [, setTick] = useState(0);
+  const task = queue[0] || null;
+  const say = (kind, text) => setLog((l) => [...l, { id: l.length + 1, time: fmtTime(new Date()), kind, text }]);
+
+  useEffect(() => {
+    if (mode.k === 'idle') return;
+    const t = setInterval(() => {
+      setMode((m) => m.k !== 'count' ? m : m.n > 1 ? { ...m, n: m.n - 1 } : { k: 'work', t0: Date.now(), plan: m.plan });
+      setTick((x) => x + 1);
+    }, 1000);
+    return () => clearInterval(t);
+  }, [mode.k]);
+
+  const drop = () => { setQueue((q) => q.slice(1)); setPinned(false); };
+  const rotate = () => { setQueue((q) => q.length > 1 ? [...q.slice(1), q[0]] : q); setPinned(false); };
+  /* Model answers go through real-looking stages, like the app's loading bar. */
+  const routed = (reply, q, saved) => {
+    setAnswer(null); setErr(null);
+    const steps = [['picking a model', 18], ['free model 1 of 3', 55], ['checking the answer', 88]];
+    steps.forEach(([label, pct], i) => setTimeout(() => setBusy({ label, pct, q }), i * 700));
+    setTimeout(() => { setBusy(null); say('brain', 'answered: ' + q); setAnswer({ q, text: reply, meta: 'free · GLM-5.3-Flash · 1 attempt · 2.1 s', saved }); }, steps.length * 700);
+  };
+  const b = {
+    task, queue, pinned, mode, log, busy, pending, followUp, answer, err, lastCheckin, undo,
+    setFollowUp, setMode, setBusy, setPending, setAnswer, setErr, setQueue, setPinned, setLastCheckin, setUndo, say,
+    reset: () => { setQueue(TASKS); setPinned(false); setMode({ k: 'idle' }); setBusy(null); setPending(null); setAnswer(null); setErr(null); setLastCheckin(null); setUndo(null); setLog(SEED); },
+    elapsed: mode.k === 'work' ? (Date.now() - mode.t0) / 1000 : 0,
+    breakLeft: mode.k === 'break' ? mode.mins * 60 - (Date.now() - mode.t0) / 1000 : 0,
+    start: (agoMin = 0) => {
+      if (!task) return;
+      if (agoMin) { setMode({ k: 'work', t0: Date.now() - agoMin * 60000, plan: task.block }); say('block', 'started ' + agoMin + ' min ago: ' + task.title); }
+      else setMode({ k: 'count', n: 3, plan: task.block });
+    },
+    beginNow: () => { setMode((m) => ({ k: 'work', t0: Date.now(), plan: m.plan })); say('block', 'started: ' + task.title); },
+    plus15: () => setMode((m) => ({ ...m, plan: m.plan + 15 })),
+    cancel: () => { setMode({ k: 'idle' }); say('block', 'cancelled. no harm done'); },
+    done: () => {
+      if (!task) return;
+      say('done', task.title); setUndo(task.title);
+      const working = mode.k === 'work';
+      drop();
+      setMode(working ? { k: 'over', why: 'task-done', title: task.title } : { k: 'idle' });
+    },
+    takeBreak: () => { setMode({ k: 'break', t0: Date.now(), mins: 10, sug: 'Golf at the range, 45 min' }); say('break', 'break started'); },
+    skipBreak: () => { setMode({ k: 'idle' }); say('break', 'skipped the break'); },
+    keepGoing: () => setMode((m) => ({ k: 'work', t0: Date.now() - (m.plan || 30) * 60000, plan: (m.plan || 30) + 15 })),
+    endBreak: () => { setMode({ k: 'checkin' }); say('break', 'break over'); },
+    checkin: (a) => { setMode({ k: 'idle' }); setLastCheckin(a); say('check', 'did something for yourself: ' + a); },
+    snooze: (label) => { if (task) { say('snooze', task.title + ' · ' + label); rotate(); } },
+    skip: () => { if (task) { say('skip', 'not this one: ' + task.title); rotate(); } },
+    pin: () => { if (task) { say('pin', (pinned ? 'unpinned: ' : 'pinned for today: ') + task.title); setPinned(!pinned); } },
+    stuck: () => { if (task) { say('you', 'i’m stuck on ' + task.title); routed(task.stuck, 'I’m stuck: ' + task.title, task.title); } },
+    confirmAdd: () => { say('add', pending.title + ' → ' + pending.list + (pending.due ? ' · ' + pending.due : '')); setPending({ ...pending, stage: 'added' }); },
+    setPendingField: (k, val) => setPending((p) => ({ ...p, [k]: val })),
+    cancelAdd: () => setPending(null),
+    setPendingList: (list) => setPending((p) => ({ ...p, list })),
+    askInstead: () => { const t = pending.raw; setPending(null); say('you', t); routed('Routed to a free model. (Mockup: no model was called.)', t); },
+  };
+  /* Plain words run the buttons, task-shaped sentences get a read-back, facts are answered by code, the rest is routed. */
+  b.command = (raw) => {
+    const text = raw.trim(), s = text.toLowerCase();
+    if (!s) return;
+    const run = (fn) => { say('you', text); fn(); };
+    if (/^(start|go|begin)$/.test(s) && mode.k === 'idle') return run(() => b.start());
+    if (/^(go|begin)$/.test(s) && mode.k === 'count') return run(b.beginNow);
+    if (/^(done|finished)$/.test(s) && (mode.k === 'idle' || mode.k === 'work')) return run(b.done);
+    if (/^(cancel|stop)$/.test(s) && (mode.k === 'count' || mode.k === 'work')) return run(b.cancel);
+    if (/^end break$/.test(s) && mode.k === 'break') return run(b.endBreak);
+    if (/^(skip|next|not this one)$/.test(s) && mode.k === 'idle') return run(b.skip);
+    if (/^(pin|unpin)$/.test(s) && mode.k === 'idle') return run(b.pin);
+    if (/^(stuck|i'?m stuck)$/.test(s)) return b.stuck();
+    const z = s.match(/^snooze(?: (1 ?h(?:our)?|3 ?h(?:ours)?|tomorrow))?$/);
+    if (z && mode.k === 'idle') return run(() => b.snooze(!z[1] ? '1 hour' : /^3/.test(z[1]) ? '3 hours' : /^t/.test(z[1]) ? 'tomorrow' : '1 hour'));
+    if (/^why$/.test(s) && task) { say('you', 'why'); return setTimeout(() => say('brain', task.why + ' ' + task.more), 200); }
+    const add = text.match(/^(?:please )?(?:remind me to|i need to|i have to|don'?t forget to|add)\s+(.+)$/i);
+    if (add) {
+      let title = add[1], due = '';
+      const d = title.match(/\s+(?:by |on )?(today|tonight|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b.*$/i);
+      if (d) { due = d[0].trim().replace(/^(by|on) /i, ''); title = title.slice(0, d.index); }
+      title = title.replace(/\s+to my list$/i, '');
+      return setPending({ raw: text, title: title[0].toUpperCase() + title.slice(1), list: /lab|chapter|quiz/i.test(title) ? 'Network Security' : /intern|apply|resume/i.test(title) ? 'Internships' : 'Personal', due });
+    }
+    say('you', text);
+    if (/what.*(do|doing|next)|right now/.test(s)) return setTimeout(() => say('brain', task ? task.title + '. ' + task.why : 'Nothing needs you right now. That’s allowed.'), 250);
+    if (/due|overdue|deadline/.test(s)) return setTimeout(() => setAnswer({ q: text, text: queue.map((t) => '• ' + t.title + ' (' + t.when + ')').join('\n'), meta: 'no model · answered by plain code from your tasks' }), 250);
+    routed((followUp ? '(Follow-up.) ' : '') + 'Routed to a free model. (Mockup: no model was called.)', text);
+  };
+  return b;
+}
+
+/* ------------------------------------------------------------------ small UI pieces */
+const ring = 'focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan/70';
+const Eyebrow = ({ children, className = '' }) => <p className={`font-mono text-[11px] font-medium uppercase tracking-[.14em] text-slate2 ${className}`}>{children}</p>;
+const Primary = ({ children, className = '', ...p }) => (
+  <button type="button" {...p} className={`btn-primary ${ring} rounded-full bg-gradient-to-br from-[#4fd1e6] to-[#7c8cff] px-6 py-2.5 text-[14px] font-semibold text-[#071022] ${className}`}>{children}</button>
+);
+const Ghost = ({ children, className = '', ...p }) => (
+  <button type="button" {...p} className={`btn-ghost ${ring} rounded-full border border-line px-5 py-2.5 text-[14px] font-medium text-ink hover:border-slate2 ${className}`}>{children}</button>
+);
+const Quiet = ({ children, className = '', ...p }) => (
+  <button type="button" {...p} className={`btn-quiet ${ring} rounded-full px-3 py-2 text-[13px] font-medium text-slate1 hover:bg-white/5 hover:text-ink ${className}`}>{children}</button>
+);
+const SectorTag = ({ t }) => (
+  <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[.12em] text-slate1">
+    <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: SECTOR[t.sector] }} />Sector {t.n} · {t.sector}
+  </span>
+);
+
+/* Menu that opens upward (the dock sits at the bottom of the screen). Arrows move, Esc closes. */
+function Menu({ label, ariaLabel, heading, items, align = 'left', buttonClass }) {
+  const [open, setOpen] = useState(false);
+  const wrap = useRef(null), btn = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const out = (e) => { if (!wrap.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', out);
+    const first = wrap.current.querySelector('[role^=menuitem]'); first && first.focus();
+    return () => document.removeEventListener('mousedown', out);
+  }, [open]);
+  const keys = (e) => {
+    const els = [...wrap.current.querySelectorAll('[role^=menuitem]')], i = els.indexOf(document.activeElement);
+    if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); btn.current.focus(); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); els[(i + 1) % els.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); els[(i - 1 + els.length) % els.length].focus(); }
+  };
+  return (
+    <div ref={wrap} className="relative inline-block" onKeyDown={open ? keys : undefined}>
+      <button ref={btn} type="button" aria-haspopup="menu" aria-expanded={open} aria-label={ariaLabel} title={ariaLabel} onClick={() => setOpen(!open)}
+        className={buttonClass || `${ring} rounded-full px-3 py-2 text-[13px] font-medium text-slate1 hover:bg-white/5 hover:text-ink`}>
+        {label}
+      </button>
+      {open && (
+        <div role="menu" aria-label={heading || ariaLabel} className={`menu-glass rise absolute bottom-full z-30 mb-2.5 w-[250px] rounded-2xl p-1.5 font-sans ${align === 'right' ? 'right-0' : 'left-0'}`}>
+          {heading && <p className="px-2.5 pb-1.5 pt-1.5 font-mono text-[10.5px] font-medium uppercase tracking-[.14em] text-slate2">{heading}</p>}
+          {items.map((it, i) => it === '-' ? <div key={i} role="separator" className="mx-2.5 my-1 border-t border-white/[.08]" /> : (
+            <button key={it.label} role={it.checked === undefined ? 'menuitem' : 'menuitemcheckbox'} aria-checked={it.checked} type="button" tabIndex={-1}
+              onClick={() => { if (it.checked === undefined && it.value === undefined) setOpen(false); it.run(); }}
+              className="group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-[7px] text-left text-[13px] text-slate1 outline-none hover:bg-white/[.06] hover:text-ink focus-visible:bg-white/[.06] focus-visible:text-ink focus-visible:ring-1 focus-visible:ring-cyan/50">
+              <span aria-hidden="true" className="h-1 w-1 flex-none rounded-full bg-slate2/60 group-hover:bg-cyan group-focus-visible:bg-cyan" />
+              <span className="flex-1">{it.label}</span>
+              {it.hint && <span className="font-mono text-[10.5px] text-slate2">{it.hint}</span>}
+              {it.value !== undefined && <span className="rounded-full border border-violet/30 bg-violet/10 px-2 py-px font-mono text-[10.5px] text-violet">{it.value} <span aria-hidden="true">↻</span></span>}
+              {it.checked !== undefined && (
+                <span aria-hidden="true" className={`relative h-[16px] w-[28px] flex-none rounded-full transition-colors ${it.checked ? 'bg-cyan/80' : 'bg-white/15'}`}>
+                  <span className={`absolute top-[2px] h-[12px] w-[12px] rounded-full bg-white transition-all ${it.checked ? 'left-[14px]' : 'left-[2px]'}`} />
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* Countdown, work block and break. */
+function Stage({ b, title }) {
+  const m = b.mode;
+  if (m.k === 'count') return (
+    <div className="rise flex flex-1 flex-col items-center justify-center text-center" role="status" aria-label={'Starting in ' + m.n}>
+      <Eyebrow>Starting</Eyebrow>
+      <p className="my-1 font-mono text-[56px] font-medium leading-none text-cyan">{m.n}</p>
+      <div className="mt-3 flex gap-2"><Primary onClick={b.beginNow}>Begin now</Primary><Quiet onClick={b.cancel}>Cancel</Quiet></div>
+    </div>
+  );
+  if (m.k === 'work') return (
+    <div className="rise flex flex-1 flex-col justify-center">
+      <Eyebrow><span aria-hidden="true" className="mr-2 inline-block h-2 w-2 rounded-full bg-ok" />Working on</Eyebrow>
+      <div className="mt-1 flex items-baseline gap-4">
+        <h2 className="min-w-0 flex-1 text-[26px] font-semibold leading-tight tracking-tight">{title}</h2>
+        <p role="timer" className="font-mono text-[40px] font-medium leading-none text-ink">{mmss(b.elapsed)}</p>
+      </div>
+      <p className="mt-1 font-mono text-[12px] text-slate2">planned {m.plan} min · ends {fmtTime(new Date(m.t0 + m.plan * 60000))} · going over is fine</p>
+      <div className="mt-4 flex flex-wrap gap-2"><Primary onClick={b.done}>Done, take a break</Primary><Ghost onClick={b.plus15}>+15 min</Ghost><Quiet onClick={b.cancel}>Cancel block</Quiet></div>
+    </div>
+  );
+  if (m.k === 'over') return (
+    <div className="rise flex flex-1 flex-col justify-center">
+      <Eyebrow><span aria-hidden="true" className={`mr-2 inline-block h-2 w-2 rounded-full ${m.why === 'task-done' ? 'bg-ok' : 'bg-amber'}`} />{m.why === 'task-done' ? 'Done' : 'Block over'}</Eyebrow>
+      <h2 className="mt-1 text-[26px] font-semibold leading-tight tracking-tight">{m.why === 'task-done' ? 'One less thing. Nicely done.' : 'Time’s up on this block.'}</h2>
+      <p className="mt-1 font-mono text-[12px] text-slate2">{m.title}{m.why === 'task-done' ? ' · marked done in QuickToDo' : ' · 50 min planned, 52 worked'}</p>
+      <div className="mt-4 flex flex-wrap gap-2"><Primary onClick={b.takeBreak}>Take a 10 min break</Primary>{m.why !== 'task-done' && <Ghost onClick={b.keepGoing}>Keep going +15 min</Ghost>}<Quiet onClick={b.skipBreak}>Skip the break</Quiet></div>
+    </div>
+  );
+  if (m.k === 'checkin') return (
+    <div className="rise flex flex-1 flex-col justify-center">
+      <Eyebrow className="!text-[#f0abfc]">Check-in</Eyebrow>
+      <h2 className="mt-1 text-[26px] font-semibold leading-tight tracking-tight">Break’s over.</h2>
+      <p className="mt-1 text-[14.5px] text-slate1">Did you do something just for you? Either answer is fine.</p>
+      <p className="mt-0.5 font-mono text-[12px] text-slate2">suggested: golf at the range</p>
+      <div className="mt-4 flex flex-wrap gap-2"><Primary onClick={() => b.checkin('yes')}>Yes</Primary><Ghost onClick={() => b.checkin('no')}>No</Ghost><Quiet onClick={() => b.checkin('not now')}>Not now</Quiet></div>
+    </div>
+  );
+  if (m.k === 'reload') return (
+    <div className="rise flex flex-1 flex-col justify-center">
+      <Eyebrow className="!text-amber">Out of date</Eyebrow>
+      <h2 className="mt-1 text-[26px] font-semibold leading-tight tracking-tight">Fresh data’s ready. Reload when you like.</h2>
+      <p className="mt-1 font-mono text-[12px] text-slate2">// the brain changed while this page was open (a block started on another tab)</p>
+      <div className="mt-4"><Primary onClick={() => location.reload()}>Reload</Primary></div>
+    </div>
+  );
+  return (
+    <div className="rise flex flex-1 flex-col justify-center">
+      <Eyebrow>Break</Eyebrow>
+      <div className="mt-1 flex items-baseline gap-4">
+        <h2 className="min-w-0 flex-1 text-[22px] font-semibold tracking-tight">Nothing to do here. That's the point.</h2>
+        <p role="timer" className="font-mono text-[40px] font-medium leading-none text-amber">{mmss(b.breakLeft)}</p>
+      </div>
+      <p className="mt-1 font-mono text-[12px] text-slate2">{m.mins} min · sized for a heavy day · ends {fmtTime(new Date(m.t0 + m.mins * 60000))}</p>
+      <p className="mt-2 text-[14px] text-slate1">{m.sug ? <>Something from your list: <span className="text-amber">{m.sug}</span>?</> : 'Nothing queued. Staring out a window counts.'}</p>
+      <div className="mt-3"><Ghost onClick={b.endBreak}>End break</Ghost></div>
+    </div>
+  );
+}
+
+const KIND = { block: '#2ee6ff', done: '#4ade80', add: '#4ade80', 'break': '#fbbf24', pin: '#fbbf24', check: '#f0abfc', you: '#a78bfa', brain: '#5eead4', snooze: '#93c5fd', skip: '#93c5fd' };
+const LogRow = ({ r }) => {
+  const c = KIND[r.kind] || '#8a92b4';
+  return (
+    <li className="grid grid-cols-[62px_54px_minmax(0,1fr)] gap-2">
+      <span className="text-slate2">{r.time}</span>
+      <span style={{ color: c }}>{r.kind}</span>
+      <span title={r.text} className={r.kind === 'brain' ? 'text-ink' : (r.kind === 'you' ? 'text-[#cfc4ff]' : 'text-slate1')}>
+        {r.kind === 'you' && <span aria-hidden="true" style={{ color: c }}>&gt; </span>}{r.text}</span>
+    </li>
+  );
+};
+
+
+/* ------------------------------------------------------------------ brain model (built once, drawn two ways) */
+const SECTORS = [   /* week = due this week, soon = due in the next two days, next = the next item (sample data) */
+  { id: 'school', n: '01', name: 'Schoolwork', count: 37, cap: 'waiting', color: '#2ee6ff', dx: -2.55, dy: -0.74, week: 5, soon: 2, next: 'Read Chapter 5', now: true },
+  { id: 'security', n: '04', name: 'Security Projects', count: 1, cap: 'to finish', color: '#a78bfa', dx: -2.05, dy: 0.44, week: 1, soon: 0, next: 'Network traffic analyzer' },
+  { id: 'intern', n: '02', name: 'Internships', count: 14, cap: 'waiting', color: '#ff8a7a', dx: 2.55, dy: -0.74, week: 6, soon: 1, next: 'Apply to 10 internships' },
+  { id: 'personal', n: '03', name: 'Personal', count: 0, cap: 'waiting', color: '#4ade80', dx: 2.05, dy: 0.4, week: 0, soon: 0, next: null },
+  { id: 'play', n: '05', name: 'Play', count: 1, cap: 'playground', color: '#fbbf24', dx: 0, dy: 1.27, week: 0, soon: 0, next: 'Golf' },
+];
+/* unit direction -> point on the brain surface. x: left/right, y: up, z: front */
+function shape(x, y, z) {
+  let r = 1;
+  r *= 1 - 0.2 * Math.exp(-(x * x) / 0.016) * (y > -0.1 ? 1 : 0.3);                 // the groove between the halves
+  r *= 1 + 0.05 * Math.sin(10 * x + 4 * z) * Math.cos(9 * y + 3 * z) + 0.03 * Math.sin(17 * z + 5 * y);   // folds
+  let px = x * r * 0.95, py = y * r * 0.78, pz = z * r * 1.22;
+  px *= 1 - 0.1 * Math.max(0, pz);                                                    // narrower at the front
+  if (py < -0.32) py = -0.32 + (py + 0.32) * 0.4;                                     // flat underside
+  return [px, py, pz];
+}
+const MODEL = (() => {
+  const P = [];
+  const N = 1500, gold = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < N; i++) { const y = 1 - 2 * (i + 0.5) / N, r = Math.sqrt(1 - y * y), a = i * gold; P.push(shape(Math.cos(a) * r, y, Math.sin(a) * r)); }
+  for (let i = 0; i < 230; i++) {                                                      // cerebellum
+    const y = 1 - 2 * (i + 0.5) / 230, r = Math.sqrt(1 - y * y), a = i * gold, k = 1 + 0.05 * Math.sin(38 * y);
+    P.push([Math.cos(a) * r * 0.5 * k, -0.5 + y * 0.27, -0.8 + Math.sin(a) * r * 0.36 * k]);
+  }
+  for (let i = 0; i < 70; i++) { const u = i / 69, a = i * 2.4, rad = 0.1 - 0.035 * u; P.push([Math.cos(a) * rad, -0.42 - 0.6 * u, -0.42 - 0.14 * u + Math.sin(a) * rad]); }   // stem
+  const n = P.length, px = new Float32Array(n), py = new Float32Array(n), pz = new Float32Array(n), hb = new Uint8Array(n);
+  P.forEach((p, i) => { px[i] = p[0]; py[i] = p[1]; pz[i] = p[2]; hb[i] = Math.max(0, Math.min(3, Math.floor((1.22 - p[2]) / 2.44 * 4))); });
+  const edges = [], adj = Array.from({ length: n }, () => []), seen = new Set();
+  for (let i = 0; i < n; i++) {                                                        // join each point to its 3 nearest
+    const best = [[9, -1], [9, -1], [9, -1]];
+    for (let j = 0; j < n; j++) { if (j === i) continue; const d = (px[i] - px[j]) ** 2 + (py[i] - py[j]) ** 2 + (pz[i] - pz[j]) ** 2; if (d < best[2][0]) { best[2] = [d, j]; best.sort((a, b) => a[0] - b[0]); } }
+    for (const [d, j] of best) { if (j < 0 || d > 0.05) continue; const key = i < j ? i * 4096 + j : j * 4096 + i; if (!seen.has(key)) { seen.add(key); edges.push(i, j); } adj[i].push(j); adj[j].push(i); }
+  }
+  const rings = [];                                                                     // horizontal slices for the second look
+  for (let k = 0; k < 26; k++) { const y = -0.9 + 1.82 * k / 25, r = Math.sqrt(1 - y * y), pts = []; for (let a = 0; a < 72; a++) { const f = a / 72 * Math.PI * 2; pts.push(shape(Math.cos(f) * r, y, Math.sin(f) * r)); } rings.push({ pts, u: k / 25 }); }
+  for (let k = 0; k < 7; k++) { const y = -0.82 + 1.64 * k / 6, r = Math.sqrt(1 - y * y), pts = []; for (let a = 0; a < 40; a++) { const f = a / 40 * Math.PI * 2; pts.push([Math.cos(f) * r * 0.5, -0.5 + y * 0.27, -0.8 + Math.sin(f) * r * 0.36]); } rings.push({ pts, u: 0.05, small: true }); }
+  for (let k = 0; k < 5; k++) { const u = k / 4, rad = 0.1 - 0.035 * u, pts = []; for (let a = 0; a < 16; a++) { const f = a / 16 * Math.PI * 2; pts.push([Math.cos(f) * rad, -0.46 - 0.56 * u, -0.43 - 0.13 * u + Math.sin(f) * rad]); } rings.push({ pts, u: 0, small: true }); }
+  const sparks = Array.from({ length: 18 }, () => { const a = Math.floor(Math.random() * N); return { a, b: adj[a][0] || a, u: Math.random(), v: 1.6 + Math.random() * 1.6 }; });
+  return { n, px, py, pz, hb, edges, adj, rings, sparks, sx: new Float32Array(n), sy: new Float32Array(n), sd: new Float32Array(n), last: 0 };
+})();
+const HUES = [186, 204, 232, 262];
+
+function drawHolo(ctx, w, h, cx, cy, S, t, core, full) {
+  const M = MODEL, yaw = 1.98 + 0.42 * Math.sin(t * 0.22), pitch = 0.16;
+  const cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  for (let i = 0; i < M.n; i++) {
+    const x = M.px[i] * cyw - M.pz[i] * syw, z = M.px[i] * syw + M.pz[i] * cyw, y = M.py[i] * cp - z * sp, z2 = M.py[i] * sp + z * cp, k = 3.6 / (3.6 - z2);
+    M.sx[i] = cx + x * S * k; M.sy[i] = cy - y * S * k; M.sd[i] = Math.max(0, Math.min(0.999, (z2 + 1.3) / 2.6));
+  }
+  ctx.clearRect(0, 0, w, h);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const by = cy + S * 0.96, breath = 0.86 + 0.14 * Math.sin(t * 1.3);
+  const cone = ctx.createLinearGradient(0, by, 0, cy - S * 0.3); cone.addColorStop(0, 'rgba(46,230,255,.13)'); cone.addColorStop(1, 'rgba(46,230,255,0)');
+  ctx.fillStyle = cone; ctx.beginPath(); ctx.moveTo(cx - S * 0.42, by); ctx.lineTo(cx - S * 1.3, cy - S * 0.3); ctx.lineTo(cx + S * 1.3, cy - S * 0.3); ctx.lineTo(cx + S * 0.42, by); ctx.fill();
+  for (let k = 0; k < 2; k++) { ctx.strokeStyle = 'rgba(46,230,255,' + (0.4 - k * 0.2) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(cx, by, S * (0.42 + k * 0.2), S * (0.06 + k * 0.03), 0, 0, 7); ctx.stroke(); }
+  if (full) {
+    /* body: a soft haze so the brain reads as a volume, not only dots */
+    const hz = ctx.createRadialGradient(cx, cy - S * 0.05, S * 0.1, cx, cy - S * 0.05, S * 1.35);
+    hz.addColorStop(0, 'rgba(70,120,255,.16)'); hz.addColorStop(0.6, 'rgba(90,80,255,.07)'); hz.addColorStop(1, 'rgba(90,80,255,0)');
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(1, 0.68); ctx.translate(-cx, -cy); ctx.fillStyle = hz; ctx.beginPath(); ctx.arc(cx, cy - S * 0.05, S * 1.35, 0, 7); ctx.fill(); ctx.restore();
+    /* depth: slow drifting motes around it */
+    for (let i = 0; i < 70; i++) {
+      const r1 = Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1, r2 = Math.abs(Math.sin(i * 78.233) * 12543.123) % 1, r3 = Math.abs(Math.sin(i * 39.425) * 9631.77) % 1;
+      const x = r1 * w + Math.sin(t * 0.2 + i) * 8, y = ((r2 * h - t * (3 + r3 * 7)) % h + h) % h, a = (0.12 + 0.3 * r3) * (0.6 + 0.4 * Math.sin(t * (0.6 + r1) + i));
+      ctx.fillStyle = 'rgba(170,200,255,' + a + ')'; const sz = 0.8 + r3 * 1.3; ctx.fillRect(x, y, sz, sz);
+    }
+  }
+  let kx = 0, ky = 0;
+  if (core) {                                   /* the thalamus: a warm core inside the hologram */
+    const Z = 0.05, Y = -0.04, x = -Z * syw, z = Z * cyw, y = Y * cp - z * sp, z2 = Y * sp + z * cp, k = 3.6 / (3.6 - z2);
+    kx = cx + x * S * k; ky = cy - y * S * k;
+    const pulse = 0.8 + 0.2 * Math.sin(t * 2.2), g = ctx.createRadialGradient(kx, ky, 0, kx, ky, S * 0.6);
+    g.addColorStop(0, 'rgba(255,236,200,' + 0.9 * pulse + ')'); g.addColorStop(0.12, 'rgba(255,170,90,' + 0.5 * pulse + ')'); g.addColorStop(0.42, 'rgba(255,120,160,' + 0.12 * pulse + ')'); g.addColorStop(1, 'rgba(255,120,160,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(kx, ky, S * 0.6, 0, 7); ctx.fill();
+  }
+  const E = M.edges, buckets = Array.from({ length: 20 }, () => []);
+  for (let e = 0; e < E.length; e += 2) { const i = E[e], j = E[e + 1]; buckets[M.hb[i] * 5 + Math.floor(Math.min(M.sd[i], M.sd[j]) * 5)].push(i, j); }
+  ctx.lineWidth = 0.7;
+  buckets.forEach((b, q) => {
+    if (!b.length) return;
+    ctx.strokeStyle = 'hsla(' + HUES[Math.floor(q / 5)] + ',100%,66%,' + ((0.05 + (q % 5) * 0.085) * breath) + ')';
+    ctx.beginPath(); for (let k = 0; k < b.length; k += 2) { ctx.moveTo(M.sx[b[k]], M.sy[b[k]]); ctx.lineTo(M.sx[b[k + 1]], M.sy[b[k + 1]]); } ctx.stroke();
+  });
+  const band = cy - S * 1.05 + ((t * 0.16) % 1) * S * 2.1;
+  for (let q = 0; q < 20; q++) {
+    const a = q % 5, sz = 1.1 + a * 0.38;
+    ctx.fillStyle = 'hsla(' + HUES[Math.floor(q / 5)] + ',100%,74%,' + (0.2 + a * 0.18) + ')';
+    for (let i = 0; i < M.n; i++) if (M.hb[i] * 5 + Math.floor(M.sd[i] * 5) === q) ctx.fillRect(M.sx[i] - sz / 2, M.sy[i] - sz / 2, sz, sz);
+  }
+  ctx.fillStyle = 'rgba(220,250,255,.9)';
+  for (let i = 0; i < M.n; i++) if (Math.abs(M.sy[i] - band) < S * 0.022) ctx.fillRect(M.sx[i] - 1.2, M.sy[i] - 1.2, 2.4, 2.4);
+  const dt = Math.min(0.05, Math.max(0, t - M.last)); M.last = t;
+  for (const s of M.sparks) {
+    s.u += dt * s.v * 3;
+    if (s.u >= 1) { const nb = M.adj[s.b]; const nx = nb.length ? nb[Math.floor(Math.random() * nb.length)] : s.a; s.a = s.b; s.b = nx; s.u = 0; }
+    const x = M.sx[s.a] + (M.sx[s.b] - M.sx[s.a]) * s.u, y = M.sy[s.a] + (M.sy[s.b] - M.sy[s.a]) * s.u, d = 0.4 + 0.6 * M.sd[s.a];
+    ctx.fillStyle = 'rgba(46,230,255,' + 0.28 * d + ')'; ctx.beginPath(); ctx.arc(x, y, 6, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,' + d + ')'; ctx.beginPath(); ctx.arc(x, y, 1.8, 0, 7); ctx.fill();
+  }
+  if (core) {
+    ctx.strokeStyle = 'rgba(255,200,140,.8)'; ctx.lineWidth = 1;
+    for (let k = 0; k < 2; k++) { ctx.beginPath(); ctx.ellipse(kx, ky, S * 0.2, S * 0.07, t * (k ? -0.7 : 0.9) + k * 1.3, 0, 7); ctx.stroke(); }
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(kx, ky, S * 0.035, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawSlices(ctx, w, h, cx, cy, S, t) {
+  const M = MODEL, yaw = 1.9 + t * 0.2, pitch = 0.34, spread = 1 + 0.035 * Math.sin(t * 0.9);
+  const cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const pr = (p) => { const X = p[0], Y = p[1] * spread, Z = p[2]; const x = X * cyw - Z * syw, z = X * syw + Z * cyw, y = Y * cp - z * sp, z2 = Y * sp + z * cp, k = 3.6 / (3.6 - z2); return [cx + x * S * k, cy - y * S * k, (z2 + 1.3) / 2.6]; };
+  ctx.clearRect(0, 0, w, h);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const c = pr([0, -0.04, 0.05]), pulse = 0.8 + 0.2 * Math.sin(t * 2.2);
+  const g = ctx.createRadialGradient(c[0], c[1], 0, c[0], c[1], S * 0.62);
+  g.addColorStop(0, 'rgba(255,236,200,' + 0.95 * pulse + ')'); g.addColorStop(0.12, 'rgba(255,170,90,' + 0.55 * pulse + ')'); g.addColorStop(0.4, 'rgba(255,79,216,' + 0.16 * pulse + ')'); g.addColorStop(1, 'rgba(255,79,216,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c[0], c[1], S * 0.62, 0, 7); ctx.fill();
+  const hot = Math.floor((t * 5) % 34);
+  M.rings.forEach((ring, ri) => {
+    const hue = ring.small ? 205 : 318 - 118 * (1 - ring.u), q = ring.pts.map(pr), n = q.length, lit = !ring.small && ri === hot;
+    for (let band = 0; band < 3; band++) {
+      ctx.strokeStyle = 'hsla(' + hue + ',100%,' + (lit ? 82 : 66) + '%,' + ((lit ? 0.5 : 0.14) + band * (lit ? 0.2 : 0.2)) + ')';
+      ctx.lineWidth = lit ? 1.6 : ring.small ? 0.8 : 1;
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) { const a = q[i], b = q[(i + 1) % n]; if (Math.min(2, Math.floor((a[2] + b[2]) / 2 * 3)) !== band) continue; ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); }
+      ctx.stroke();
+    }
+  });
+  ctx.strokeStyle = 'rgba(255,200,140,.75)'; ctx.lineWidth = 1;
+  for (let k = 0; k < 2; k++) { ctx.beginPath(); ctx.ellipse(c[0], c[1], S * 0.2, S * 0.07, t * (k ? -0.7 : 0.9) + k * 1.3, 0, 7); ctx.stroke(); }
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(c[0], c[1], S * 0.035, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+/* ------------------------------------------------------------------ nodes */
+function RingNode({ s, on, mono, glow }) {              /* look 1: instrument ring */
+  const C = 2 * Math.PI * 34, frac = s.count ? Math.max(0.05, Math.min(1, s.count / 40)) : 0;
+  return (
+    <svg width="104" height="104" viewBox="-52 -52 104 104" aria-hidden="true" style={glow ? { filter: 'drop-shadow(0 0 16px ' + s.color + '55)' } : undefined}>
+      <circle r="46" fill="none" stroke={s.color} strokeOpacity=".4" strokeWidth="1" strokeDasharray="1.5 7" className="spin" />
+      <circle r="34" fill={s.color} fillOpacity={on ? 0.16 : 0.07} stroke="#fff" strokeOpacity=".12" strokeWidth="2" />
+      <circle r="34" fill="none" stroke={s.color} strokeWidth={on ? 3 : 2} strokeLinecap="round" strokeDasharray={frac * C + ' ' + C} transform="rotate(-90)" style={{ filter: 'drop-shadow(0 0 6px ' + s.color + ')' }} />
+      <text y="9" textAnchor="middle" fill="#fff" fontFamily={mono ? 'JetBrains Mono' : 'Inter'} fontWeight={mono ? 500 : 600} fontSize={mono ? 25 : 27}>{mono ? String(s.count).padStart(2, '0') : s.count}</text>
+    </svg>
+  );
+}
+function DialNode({ s, on }) {              /* look 6: a small instrument. bright arc = this week, dim arc = everything, orbiting dots = due in two days */
+  const C = 2 * Math.PI * 36, all = Math.min(1, s.count / 40), wk = Math.min(all, s.week / 40), empty = !s.count;
+  return (
+    <svg width="104" height="104" viewBox="-62 -62 124 124" aria-hidden="true" style={{ filter: 'drop-shadow(0 0 ' + (s.now ? 22 : 14) + 'px ' + s.color + (s.now ? '88' : '44') + ')', opacity: empty ? 0.6 : 1 }}>
+      <defs><radialGradient id={'g-' + s.id}><stop offset="0" stopColor={s.color} stopOpacity={on ? 0.34 : 0.22} /><stop offset="1" stopColor={s.color} stopOpacity="0.03" /></radialGradient></defs>
+      {Array.from({ length: 36 }, (_, i) => { const a = i * Math.PI / 18, r0 = i % 3 ? 45.5 : 44, c = Math.cos(a), q = Math.sin(a); return <line key={i} x1={c * r0} y1={q * r0} x2={c * 48} y2={q * 48} stroke="#fff" strokeOpacity={i % 3 ? 0.12 : 0.28} strokeWidth="1" />; })}
+      <circle r="55" fill="none" stroke={s.color} strokeOpacity=".3" strokeWidth="1" strokeDasharray="1.5 8" className="spin" />
+      {s.soon > 0 && <g className="spin-rev">{Array.from({ length: s.soon }, (_, i) => { const a = i * 0.5; return <circle key={i} cx={Math.cos(a) * 55} cy={Math.sin(a) * 55} r="2.6" fill="#fff" style={{ filter: 'drop-shadow(0 0 4px ' + s.color + ')' }} />; })}</g>}
+      <circle r="30" fill={'url(#g-' + s.id + ')'} />
+      <circle r="36" fill="none" stroke="#fff" strokeOpacity=".1" strokeWidth="3" />
+      <circle r="36" fill="none" stroke={s.color} strokeOpacity=".38" strokeWidth="3" strokeLinecap="round" strokeDasharray={all * C + ' ' + C} transform="rotate(-90)" />
+      {wk > 0 && <circle r="36" fill="none" stroke={s.color} strokeWidth={on ? 4.5 : 3.5} strokeLinecap="round" strokeDasharray={Math.max(0.02, wk) * C + ' ' + C} transform="rotate(-90)" style={{ filter: 'drop-shadow(0 0 5px ' + s.color + ')' }} />}
+      <text y="9" textAnchor="middle" fill="#fff" fillOpacity={empty ? 0.6 : 1} fontFamily="Inter" fontWeight="600" fontSize="26">{s.count}</text>
+    </svg>
+  );
+}
+function HexNode({ s, on }) {               /* look 2: hex cell */
+  const hex = (r) => Array.from({ length: 6 }, (_, i) => (Math.cos(Math.PI / 3 * i) * r).toFixed(1) + ',' + (Math.sin(Math.PI / 3 * i) * r).toFixed(1)).join(' ');
+  return (
+    <svg width="104" height="104" viewBox="-52 -52 104 104" aria-hidden="true">
+      <polygon points={hex(47)} fill="none" stroke={s.color} strokeOpacity=".35" strokeWidth="1" strokeDasharray="10 14" className="spin-rev" />
+      <polygon points={hex(36)} fill={s.color} fillOpacity={on ? 0.2 : 0.08} stroke={s.color} strokeWidth={on ? 2.4 : 1.5} style={{ filter: 'drop-shadow(0 0 7px ' + s.color + ')' }} />
+      <polygon points={hex(28)} fill="none" stroke="#fff" strokeOpacity=".1" strokeWidth="1" />
+      <text y="9" textAnchor="middle" fill="#fff" fontFamily="JetBrains Mono" fontWeight="500" fontSize="25">{String(s.count).padStart(2, '0')}</text>
+    </svg>
+  );
+}
+
+function BrainStage({ look, nowId = 'school', open = null, setOpen = () => {}, sel = null, setSel = () => {}, lowPower = false, low = false, setLow, setLowPower, sync = 'ok', sectors = SECTORS, b, intro = false, pinnedCount = 0 }) {
+  const wrap = useRef(null), cv = useRef(null);
+  const [dim, setDim] = useState({ w: 0, h: 0 });
+  const active = open;
+  useEffect(() => { const ro = new ResizeObserver(([e]) => setDim({ w: Math.round(e.contentRect.width), h: Math.round(e.contentRect.height) })); ro.observe(wrap.current); return () => ro.disconnect(); }, []);
+  const S = Math.max(40, Math.min(dim.h * 0.255, dim.w * 0.14)), cx = dim.w / 2, cy = dim.h * 0.43;
+  const holo = look === 1 || look >= 4, rich = look === 6, half = 52;
+  const still = lowPower || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  useEffect(() => {
+    if (!dim.w) return;
+    const c = cv.current, dpr = Math.min(2, window.devicePixelRatio || 1);
+    c.width = dim.w * dpr; c.height = dim.h * dpr;
+    const ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    let raf; const t0 = performance.now(); MODEL.last = 0;
+    /* low energy: the same brain at half speed (the colour shift is a CSS filter on the canvas) */
+    const frame = (now) => { (holo ? drawHolo : drawSlices)(ctx, dim.w, dim.h, cx, cy, S, still ? 2 : (now - t0) / 1000 * (low ? 0.5 : 1), look >= 4, look >= 5 && !lowPower); if (!still) raf = requestAnimationFrame(frame); };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, [dim.w, dim.h, look, still, low, lowPower]);
+  const ax0 = Math.max(150, dim.w * 0.17), ay0 = dim.h * 0.46;          /* where an opened dial sits */
+  const openSec = sectors.find((s) => s.id === open);
+
+  const nodes = sectors.map((s) => {
+    const x = cx + s.dx * S, y = cy + s.dy * S, ang = Math.atan2(s.dy, s.dx);
+    const ax = cx + Math.cos(ang) * S * (holo ? 1.28 : 1.36), ay = s.dx ? cy + Math.sin(ang) * S * 0.8 : cy + S * (holo ? 1.0 : 0.92);
+    let d;
+    if (holo) {
+      const L = Math.hypot(ax - x, ay - y) || 1, ex = x + (ax - x) / L * 50, ey = y + (ay - y) / L * 50, mx = (ex + ax) / 2, my = (ey + ay) / 2, bend = s.dx ? 0.16 : 0;
+      d = 'M' + ex.toFixed(1) + ' ' + ey.toFixed(1) + ' Q' + (mx - (ay - ey) * bend).toFixed(1) + ' ' + (my + (ax - ex) * bend * (s.dx > 0 ? -1 : 1)).toFixed(1) + ' ' + ax.toFixed(1) + ' ' + ay.toFixed(1);
+    } else if (!s.dx) {
+      d = 'M' + x.toFixed(1) + ' ' + (y - (look === 3 ? 50 : 40)).toFixed(1) + ' V' + ay.toFixed(1);
+    } else {
+      const sg = ax > x ? 1 : -1, x0 = x + sg * (look === 3 ? 50 : 42), dyv = Math.abs(ay - y);
+      let x1 = ax - sg * (dyv + 16); if ((x1 - x0) * sg < 8) x1 = x0 + sg * 8;
+      d = 'M' + x0.toFixed(1) + ' ' + y.toFixed(1) + ' H' + x1.toFixed(1) + ' L' + (x1 + sg * dyv).toFixed(1) + ' ' + ay.toFixed(1) + ' H' + ax.toFixed(1);
+    }
+    const inner = ' Q' + ((ax + cx) / 2).toFixed(1) + ' ' + ay.toFixed(1) + ' ' + cx.toFixed(1) + ' ' + (cy + S * 0.04).toFixed(1);
+    return { ...s, now: s.id === nowId, x, y, ax, ay, d, dp: look >= 5 ? d + inner : d, din: look >= 5 ? 'M' + ax.toFixed(1) + ' ' + ay.toFixed(1) + inner : null };
+  });
+
+  return (
+    <div ref={wrap} className="relative min-h-0 flex-1 overflow-hidden">
+      {!holo && <div aria-hidden="true" className="absolute inset-0 opacity-[.35]" style={{ backgroundImage: 'radial-gradient(rgba(140,150,220,.35) 1px, transparent 1px)', backgroundSize: '28px 28px', WebkitMaskImage: 'radial-gradient(60% 70% at 50% 45%, #000, transparent)', maskImage: 'radial-gradient(60% 70% at 50% 45%, #000, transparent)' }} />}
+      <canvas ref={cv} aria-hidden="true" className="absolute inset-0 h-full w-full"
+        style={{ opacity: intro ? 0 : open ? 0.16 : 1, filter: (open ? 'blur(3px) ' : '') + (low ? 'hue-rotate(28deg) saturate(.65) brightness(.85)' : ''), transform: open ? 'scale(.94)' : 'none', transition: 'opacity .9s ease, filter .6s ease, transform .6s ease' }} />
+      <svg aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full" style={{ opacity: open || intro ? 0 : 1, transition: 'opacity .4s' }}>
+        {dim.w > 0 && nodes.map((n, i) => (
+          <g key={n.id + look}>
+            <path d={n.d} fill="none" stroke={n.color} strokeOpacity={active === n.id ? 0.9 : 0.45} strokeWidth={holo ? 1.1 : 1.3} strokeLinejoin="round" />
+            {n.din && <path d={n.din} fill="none" stroke={n.color} strokeOpacity=".28" strokeWidth="1" strokeDasharray="2 5" />}
+            <circle cx={n.ax} cy={n.ay} r={holo ? 3 : 0} fill="none" stroke={n.color} strokeWidth="1.2" />
+            {!holo && <rect x={n.ax - 3} y={n.ay - 3} width="6" height="6" fill="#05061a" stroke={n.color} strokeWidth="1.2" />}
+            {!still && [0, 1].map((k) => (
+              <g key={k}>
+                {n.din && <circle cx={cx} cy={cy + S * 0.04} r={S * 0.17} fill={n.color} opacity="0" style={{ filter: 'blur(7px)', mixBlendMode: 'screen' }}>
+                  <animate attributeName="opacity" values="0;0;.6;0" keyTimes="0;.9;.96;1" dur={(3.4 + i * 0.5) + 's'} begin={(k * 1.7 + i * 0.4) + 's'} repeatCount="indefinite" /></circle>}
+                <circle r={holo ? 6 : 5} fill={n.color} fillOpacity=".22"><animateMotion dur={(3.4 + i * 0.5) + 's'} begin={(k * 1.7 + i * 0.4) + 's'} repeatCount="indefinite" path={n.dp} /></circle>
+                {holo
+                  ? <circle r="2" fill="#fff"><animateMotion dur={(3.4 + i * 0.5) + 's'} begin={(k * 1.7 + i * 0.4) + 's'} repeatCount="indefinite" path={n.dp} /></circle>
+                  : <rect x="-2" y="-2" width="4" height="4" fill="#fff"><animateMotion dur={(3.4 + i * 0.5) + 's'} begin={(k * 1.7 + i * 0.4) + 's'} repeatCount="indefinite" path={n.dp} /></rect>}
+              </g>
+            ))}
+          </g>
+        ))}
+      </svg>
+
+      <TopBar low={low} setLow={setLow} lowPower={lowPower} setLowPower={setLowPower} sync={sync} pinnedCount={pinnedCount} onPinned={() => { setOpen('school'); setSel('s2'); }} intro={intro} />
+      <p className="absolute inset-x-0 top-[11%] text-center font-mono text-[13px] italic text-slate1" style={{ opacity: open || intro ? 0 : 1, transition: 'opacity .4s' }}>// what should i be doing right now?</p>
+
+      {open && openSec && <ClusterView sec={openSec} ax={ax0} ay={ay0} dim={dim} sel={sel} setSel={setSel} close={() => { setOpen(null); setSel(null); }} still={still} b={b} low={low} />}
+
+      {dim.w > 0 && nodes.map((n, i) => (
+        <button key={n.id} type="button" aria-pressed={active === n.id} aria-expanded={active === n.id} onClick={() => { if (active === n.id) { setOpen(null); setSel(null); } else { setOpen(n.id); setSel(null); } }}
+          aria-label={'Sector ' + n.n + ', ' + n.name + ': ' + n.count + ' ' + n.cap + (active === n.id ? '. Open; press to close.' : '. Press to open.')} data-now={rich && n.now && !open ? '1' : undefined} tabIndex={open && active !== n.id ? -1 : 0}
+          className="absolute flex w-[220px] -translate-x-1/2 flex-col items-center whitespace-nowrap rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-cyan/60"
+          style={{ left: active === n.id ? ax0 : n.x, top: (active === n.id ? ay0 : n.y) - half, opacity: intro ? 0 : open && active !== n.id ? 0 : 1, pointerEvents: open && active !== n.id ? 'none' : 'auto',
+            transform: 'translateX(-50%) scale(' + (intro ? 0.6 : active === n.id ? 1.12 : 1) + ')', transition: 'left .6s cubic-bezier(.3,.7,.2,1), top .6s cubic-bezier(.3,.7,.2,1), opacity .5s ease ' + (intro ? 0 : i * 0.08) + 's, transform .6s ease ' + (intro ? 0 : i * 0.08) + 's' }}>
+          {rich && n.now && <span className="absolute -top-4 rounded-full px-2 py-px font-mono text-[9.5px] font-medium uppercase tracking-[.18em] text-[#05061a]" style={{ background: n.color }}>now</span>}
+          {rich ? <DialNode s={n} on={active === n.id} /> : look === 2 ? <HexNode s={n} on={active === n.id} /> : <RingNode s={n} on={active === n.id} mono={look === 3} glow={look === 5} />}
+          {rich ? (
+            <>
+              <span className="-mt-1.5 font-mono text-[11.5px] uppercase tracking-[.16em]" style={{ color: n.count ? n.color : '#4ade80' }}>
+                {!n.count ? 'clear' : n.id === 'play' ? 'playground' : n.week ? n.week + ' this week' + (n.count > n.week ? ' · ' + (n.count - n.week) + ' later' : '') : n.cap}</span>
+              <span className="mt-1 font-mono text-[12px] uppercase tracking-[.16em] text-slate1">Sector {n.n} · {n.name}</span>
+              {n.next && active !== n.id && <span className="mt-0.5 max-w-[210px] whitespace-normal text-center text-[12.5px] leading-snug text-slate2"><span className="font-mono text-[10.5px] uppercase tracking-[.14em]">next </span>{n.next}</span>}
+            </>
+          ) : holo ? (
+            <>
+              <span className="-mt-1 font-mono text-[9.5px] uppercase tracking-[.22em]" style={{ color: n.color }}>{n.cap}</span>
+              <span className="mt-1 font-mono text-[10.5px] uppercase tracking-[.2em] text-slate1">Sector {n.n} · {n.name}</span>
+            </>
+          ) : (
+            <>
+              <span className="-mt-1 flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[.16em] text-ink">
+                <span className="rounded-sm px-1 py-px text-[9.5px] text-[#05061a]" style={{ background: n.color }}>{n.n}</span>{n.name}</span>
+              <span className="mt-1 flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[.18em] text-slate2">
+                {look === 2 && <span className="flex gap-[2px]">{Array.from({ length: 8 }, (_, k) => <span key={k} className="h-[5px] w-[5px]" style={{ background: k < Math.ceil(Math.min(1, n.count / 40) * 8) ? n.color : 'rgba(255,255,255,.12)' }} />)}</span>}{look === 3 ? <span style={{ color: n.color }}>{n.cap}</span> : n.cap}</span>
+            </>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ Step 0: the views the first mockup did not design (sample data) */
+const CLUSTER = {
+  school: { open: 37, items: [
+    { id: 's1', title: 'Read Chapter 5', due: 'slipped past Wed, Nov 4', est: '1 h 30 min', fill: 1, soon: true, startable: true, now: true, why: 'Still worth doing first, and it only takes one piece at a time.' },
+    { id: 's2', title: 'Lab 9: Firewall rules', due: 'Thu, Nov 12 · 11:59 PM', est: '2 h', fill: 0.8, soon: true, startable: true, pinned: true, why: 'Nearest deadline after Chapter 5.', res: 'EC-Council lab · you log in yourself' },
+    { id: 's3', title: 'e-News 5: Zero trust in practice', due: 'Fri, Nov 13 · 11:59 PM', est: '45 min', fill: 0.6, startable: true, why: 'Due this week. Short, a good fit for a tired evening.' },
+    { id: 's4', title: 'Test 4: Cloud Platform and Infrastructure Security', due: 'Mon, Nov 16 · 5:30 PM', est: '1 h', fill: 0.4, startable: true, why: 'Opens in iCollege. You log in yourself.' },
+  ], more: 33, rest: ['Lab 10: VPN tunnels · Thu, Nov 19', 'Read Chapter 6 · Fri, Nov 20', 'Discussion 6: Shared responsibility · Sun, Nov 22', 'AWS Lab 11: IAM policies · Mon, Nov 23', 'e-News 6 · Fri, Nov 27', 'Final project proposal · Mon, Nov 30'] },
+  intern: { open: 14, items: [
+    { id: 'i1', title: 'Apply to 10 internships (week of Nov 9)', due: 'Sun, Nov 15', est: '1 h', fill: 0.5, startable: true, why: '4 of 10 done this week.' },
+    { id: 'i2', title: 'CareSource: security intern, ready to submit', due: 'apply by Fri, Nov 13', est: '20 min', fill: 0.7, soon: true, startable: true, why: 'Resume and letter are already in Tailored Resumes.' },
+    { id: 'i3', title: 'Quantum Vault: follow up', due: 'no deadline', est: '15 min', fill: 0.1, startable: true, why: 'Applied Nov 7. A short note is enough.' },
+  ], more: 11, rest: ['Lumiture: watch for an internship posting', 'Deloitte cyber intern · opens Dec 1'] },
+  security: { open: 1, later: 11, items: [
+    { id: 'p1', title: 'Network traffic analyzer', due: 'no deadline', est: '1 h', fill: 0.2, startable: true, why: 'Your one project in focus.', left: 'On Phase 2, parsing captures · 2 days ago · unsaved work', auto: true },
+  ] },
+  personal: { open: 0, items: [] },
+  play: { open: 5, items: [
+    { id: 'o1', kind: 'offer', title: 'Offer: golf', due: 'optional · 90 min', why: 'Light day and 4 h of daylight left. Want to hit the range?' },
+    { id: 'pr1', kind: 'project', title: 'Thalamus', due: 'started', left: 'On Phase 18, mocking the new dock · today · unsaved work', auto: true },
+    { id: 'h1', kind: 'habit', title: 'Stretch 10 min', due: 'daily · one for today', why: 'Repeats daily. One text around 8:00 PM if today’s isn’t done. Skip it freely; nothing piles up.' },
+    { id: 'id1', kind: 'idea', title: 'Gianna’s bday Python project', due: 'idea, parked' },
+    { id: 'add', kind: 'add', title: 'Add an idea', due: 'parks it here, no deadline' },
+  ] },
+};
+const ICON = {
+  pin: 'M9 2h6l-1 6 3 3H7l3-3zM12 14v7', snooze: 'M4 12a8 8 0 1 0 8-8M4 4v5h5M12 8v4l3 2', skip: 'M5 5l7 7-7 7M13 5l7 7-7 7', stuck: 'M13 3L5 14h6l-1 7 8-11h-6z', earlier: 'M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 3',
+};
+const Ico = ({ d, s = 15 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>;
+/* small labelled tools: an icon plus a word, so nothing depends on hover */
+const Tool = ({ icon, children, on, ...p }) => (
+  <button type="button" {...p} className={`${ring} flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] uppercase tracking-[.1em] ${on ? 'border-amber/50 bg-amber/10 text-amber' : 'border-white/10 text-slate1 hover:border-slate2 hover:text-ink'}`}><Ico d={ICON[icon]} s={13} />{children}</button>
+);
+
+function TopBar({ low, setLow, lowPower, setLowPower, sync, pinnedCount, onPinned, intro }) {
+  const S2 = { ok: ['bg-ok', 'synced 4:52 PM · 1 min ago', 'text-slate1'], stale: ['bg-amber', 'stale · last sync 3 h ago · is QuickToDo running?', 'text-amber'],
+    unreadable: ['bg-amber', 'couldn’t read the latest snapshot · showing the last good one', 'text-amber'], none: ['bg-slate2', 'no data yet', 'text-slate2'] }[sync];
+  const mb = (on) => `${ring} flex items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] uppercase tracking-[.1em] ${on ? 'border-violet/60 bg-violet/15 text-ink' : 'border-white/10 text-slate1 hover:border-slate2 hover:text-ink'}`;
+  return (
+    <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-8 pt-5" style={{ opacity: intro ? 0 : 1, transition: 'opacity .6s .9s' }}>
+      <span className="font-mono text-[15px] font-light tracking-[.5em] text-[#7fd8ea]">THALAMUS<span className="text-amber">.</span></span>
+      <span className="flex items-center gap-3 font-mono text-[12px] text-slate1">
+        <span className="text-ink">4:53:56 PM</span>
+        {pinnedCount > 0 && <button type="button" onClick={onPinned} className={`${ring} rounded-md border border-amber/40 px-2 py-1 text-[11px] uppercase tracking-[.1em] text-amber hover:bg-amber/10`} title="Open the pinned task">{pinnedCount} pinned ↗</button>}
+        <button type="button" aria-pressed={low} onClick={() => setLow(!low)} className={mb(low)} title="Low energy: shorter blocks, softer wording"><span aria-hidden="true">☕</span>low energy</button>
+        <button type="button" aria-pressed={lowPower} onClick={() => setLowPower(!lowPower)} className={mb(lowPower)} title="Low power: stops the animation"><span aria-hidden="true">▭</span>low power</button>
+        <span className={`flex items-center ${S2[2]}`} role="status"><span aria-hidden="true" className={`mr-1.5 inline-block h-2 w-2 rounded-full ${S2[0]}`} />{S2[1]}</span>
+        <button type="button" className={`${ring} rounded-md border border-white/10 px-2 py-1 text-[11px] uppercase tracking-[.1em] text-slate1 hover:text-ink`}>Plain version</button>
+      </span>
+    </div>
+  );
+}
+
+function MiniDial({ it, color }) {
+  const C = 2 * Math.PI * 17, k = it.kind;
+  return (
+    <svg width="46" height="46" viewBox="-23 -23 46 46" aria-hidden="true" className="flex-none" style={{ filter: 'drop-shadow(0 0 8px ' + color + (k === 'idea' || k === 'add' ? '22' : '55') + ')' }}>
+      <circle r="21" fill="none" stroke={color} strokeOpacity=".28" strokeWidth="1" strokeDasharray={k === 'idea' || k === 'add' || k === 'more' || k === 'offer' ? '2 4' : '1 5'} />
+      <circle r="17" fill={color} fillOpacity={k === 'idea' || k === 'add' ? 0.04 : 0.12} stroke="#fff" strokeOpacity=".1" strokeWidth="2.5" />
+      {it.fill > 0 && <circle r="17" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeDasharray={it.fill * C + ' ' + C} transform="rotate(-90)" />}
+      {k === 'project' && <circle r="17" fill="none" stroke={color} strokeWidth="2.5" />}
+      {it.soon && <circle cx="0" cy="-21" r="2.4" fill="#fff" />}
+      {k === 'more' ? <text y="4.5" textAnchor="middle" fill="#fff" fontFamily="JetBrains Mono" fontSize="12">+{it.n}</text>
+        : k === 'add' ? <text y="6" textAnchor="middle" fill={color} fontFamily="Inter" fontSize="18">+</text>
+        : k === 'habit' ? <text y="5" textAnchor="middle" fill={color} fontFamily="Inter" fontSize="14">↻</text>
+        : k === 'offer' ? <text y="5" textAnchor="middle" fill={color} fontFamily="Inter" fontSize="13">✦</text>
+        : <circle r={it.now ? 4 : 2.6} fill={k === 'idea' ? color : '#fff'} fillOpacity={k === 'idea' ? 0.5 : 0.9} />}
+    </svg>
+  );
+}
+
+/* An opened sector: the dial slides left, the brain dims behind, tasks branch out on fibres. Esc or Back closes. */
+function ClusterView({ sec, ax, ay, dim, sel, setSel, close, still, b, low }) {
+  const data = CLUSTER[sec.id] || { open: 0, items: [] };
+  const items = data.items.concat(data.more ? [{ id: 'more', kind: 'more', n: data.more, title: data.more + ' more in this sector', due: 'search and act on any of them' }] : []);
+  useEffect(() => { const k = (e) => { if (e.key === 'Escape') { if (sel) setSel(null); else close(); } }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [sel]);
+  const n = items.length, top = 96, bot = dim.h - 70;
+  const pos = items.map((it, i) => { const u = n === 1 ? 0.5 : i / (n - 1), y = n === 1 ? ay : top + (bot - top) * (0.08 + 0.84 * u); return { it, x: ax + 230 + 80 * Math.sin(Math.PI * (n === 1 ? 0.5 : u)), y }; });
+  const S = pos.find((p) => p.it.id === sel);
+  return (
+    <div className="absolute inset-0 z-10">
+      <button type="button" aria-label="Close the sector and return to the brain" tabIndex={-1} onClick={close} className="absolute inset-0 cursor-default" />
+      <div className="rise absolute left-8 top-[60px] flex items-center gap-4">
+        <button type="button" onClick={close} className={`${ring} flex items-center gap-1.5 rounded-md border border-white/15 px-2.5 py-1 font-mono text-[11.5px] uppercase tracking-[.12em] text-slate1 hover:text-ink`}>← Back <span className="text-slate2 normal-case tracking-normal">esc</span></button>
+        <span className="font-mono text-[12px] uppercase tracking-[.16em]" style={{ color: sec.color }}>Sector {sec.n} · {sec.name}</span>
+        <span className="font-mono text-[12px] text-slate2">{sec.id === 'play' ? '1 project · 1 idea · 1 repeating · no deadlines here' : sec.id === 'security' ? 'one project at a time · ' + data.later + ' more later, hidden on purpose' : data.open ? data.open + ' open · showing ' + data.items.length : 'nothing open'}</span>
+      </div>
+      {!n && (
+        <div className="rise absolute max-w-[340px]" style={{ left: ax + 110, top: ay - 30 }}>
+          <p className="text-[18px] font-semibold text-ink">Nothing here right now.</p>
+          <p className="mt-1 text-[14px] text-slate1">Errands you add (in QuickToDo or by typing “remind me to …”) land here.</p>
+        </div>
+      )}
+      <svg aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full">
+        {pos.map((p, i) => {
+          const d = 'M' + (ax + 56) + ' ' + ay + ' C' + (ax + 140) + ' ' + ay + ', ' + (p.x - 110) + ' ' + p.y + ', ' + (p.x - 25) + ' ' + p.y;
+          return (
+            <g key={p.it.id}>
+              <path d={d} fill="none" stroke={sec.color} strokeOpacity={sel === p.it.id ? 0.85 : p.it.kind === 'idea' || p.it.kind === 'add' || p.it.kind === 'more' ? 0.22 : 0.45} strokeWidth="1.1" strokeDasharray={p.it.kind === 'idea' || p.it.kind === 'add' ? '3 5' : 'none'} strokeDashoffset="0">
+                {!still && <animate attributeName="stroke-dashoffset" from="400" to="0" dur=".7s" begin={(i * 0.06) + 's'} fill="freeze" />}
+              </path>
+              {!still && p.it.kind !== 'add' && <circle r="2" fill="#fff"><animateMotion dur={(2.8 + i * 0.4) + 's'} begin={(0.7 + i * 0.3) + 's'} repeatCount="indefinite" path={d} /></circle>}
+            </g>
+          );
+        })}
+      </svg>
+      {pos.map((p, i) => (
+        <button key={p.it.id} type="button" aria-expanded={sel === p.it.id} onClick={() => setSel(sel === p.it.id ? null : p.it.id)}
+          className={`rise absolute flex items-center gap-3 rounded-xl py-1 pl-1 pr-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-cyan/60 ${sel === p.it.id ? 'bg-white/[.06]' : 'hover:bg-white/[.04]'}`}
+          style={{ left: p.x - 24, top: p.y - 24, animationDelay: (0.2 + i * 0.07) + 's', animationFillMode: 'backwards' }}>
+          <MiniDial it={p.it} color={sec.color} />
+          <span className="flex max-w-[300px] flex-col">
+            <span className={`text-[14px] leading-snug ${p.it.kind === 'idea' || p.it.kind === 'add' ? 'text-slate1' : 'text-ink'}`}>{p.it.title}
+              {p.it.pinned && <span className="ml-2 rounded px-1.5 py-px align-middle font-mono text-[10px] uppercase tracking-[.14em] text-amber ring-1 ring-amber/40">pinned</span>}
+              {p.it.now && <span className="ml-2 rounded px-1.5 py-px align-middle font-mono text-[10px] uppercase tracking-[.14em] text-[#05061a]" style={{ background: sec.color }}>now</span>}</span>
+            <span className="font-mono text-[11.5px] text-slate2">{low && /slipped/.test(p.it.due) ? 'past due' : p.it.due}{p.it.est ? ' · ' + p.it.est : ''}</span>
+          </span>
+        </button>
+      ))}
+      {S && <ItemCard key={S.it.id} it={S.it} sec={sec} data={data} x={Math.min(Math.max(...pos.map((p) => p.x)) + 350, dim.w - 392)} y={Math.max(70, S.y - 60)} maxBottom={dim.h - 44} onClose={() => setSel(null)} b={b} low={low} />}
+    </div>
+  );
+}
+
+function ItemCard({ it, sec, data, x, y, maxBottom, onClose, b, low }) {
+  const [q, setQ] = useState('');
+  const me = useRef(null), [top, setTop] = useState(y);
+  /* keep the whole card on screen: slide it up if it would run under the command field */
+  React.useLayoutEffect(() => { const h = me.current ? me.current.offsetHeight : 0; setTop(Math.max(64, Math.min(y, maxBottom - h))); }, [y, maxBottom, q]);
+  const k = it.kind || 'task';
+  const busy = b && b.mode.k !== 'idle';
+  const snoozes = [{ label: 'Snooze 1 hour', run: () => {} }, { label: 'Snooze 3 hours', run: () => {} }, { label: 'Snooze until tomorrow', run: () => {} }];
+  const earlier = [10, 15, 30, 60].map((m) => ({ label: 'I started ' + m + ' min ago', run: () => {} }));
+  const line = (ph, btn, init) => (
+    <div className="mt-2 flex gap-1.5">
+      <input defaultValue={init || ''} placeholder={ph} aria-label={ph} className={`${ring} min-w-0 flex-1 rounded-lg border border-white/12 bg-white/[.04] px-2.5 py-1.5 text-[13px] text-ink placeholder:text-slate2`} />
+      <Ghost className="!px-3 !py-1.5 !text-[11px]">{btn}</Ghost>
+    </div>
+  );
+  return (
+    <div ref={me} role="dialog" aria-label={it.title} className="dock-glass dock-v2 rise absolute z-20 w-[372px] !rounded-[14px] p-4" style={{ left: x, top, '--sec': sec.color, transition: 'top .25s ease' }}>
+      <div className="card-left -m-4 p-4 !rounded-[14px]">
+        <div className="flex items-start justify-between gap-3">
+          <Eyebrow className="!text-[11px]" ><span style={{ color: sec.color }}>Sector {sec.n} · {k === 'task' ? sec.name : k === 'more' ? 'everything else' : k}</span></Eyebrow>
+          <button type="button" onClick={onClose} aria-label="Close card" className={`${ring} -mt-1 rounded px-1.5 font-mono text-[13px] text-slate2 hover:text-ink`}>×</button>
+        </div>
+        {k !== 'more' && <h3 className="mt-1 text-[19px] font-semibold leading-snug">{it.title}</h3>}
+        {k === 'task' && <>
+          <p className="mt-0.5 font-mono text-[12px] text-slate1">{it.est} · {low && /slipped/.test(it.due) ? 'past due' : it.due}</p>
+          <p className="mt-2 text-[13.5px] leading-relaxed text-slate1">{low && /slipped/.test(it.due) ? 'Past its deadline. No need to do all of it: one small piece at a time.' : it.why}</p>
+          {it.res && <p className="mt-1.5 text-[13px] text-slate1"><span aria-hidden="true" className="mr-1.5 text-cyan">▤</span>{it.res}</p>}
+          {it.left && <p className="mt-1.5 text-[13px] italic text-slate2">Where you left off: {it.left}{it.auto ? ' (automatic)' : ''}</p>}
+          <div className="mt-3 flex gap-2">
+            {it.startable && !busy && <Primary className="flex-1 whitespace-nowrap !px-3">▶&nbsp; Start {low ? 20 : 30} min</Primary>}
+            <Ghost className="flex-1 whitespace-nowrap !px-3">✓&nbsp; Done</Ghost>
+          </div>
+          {busy && <p className="mt-1.5 font-mono text-[11px] text-slate2">// a block is running, so Start waits until it ends</p>}
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            <Tool icon="pin" on={it.pinned}>{it.pinned ? 'Unpin' : 'Pin'}</Tool>
+            <Menu label={<span className="flex items-center gap-1.5"><Ico d={ICON.snooze} s={13} />Snooze</span>} ariaLabel="Snooze" heading="Snooze" items={snoozes}
+              buttonClass={`${ring} flex items-center rounded-md border border-white/10 px-2 py-1 font-mono text-[11px] uppercase tracking-[.1em] text-slate1 hover:border-slate2 hover:text-ink`} />
+            <Tool icon="skip">Not this one</Tool>
+            <Tool icon="stuck">I’m stuck</Tool>
+            {it.startable && !busy && <Menu label={<span className="flex items-center gap-1.5"><Ico d={ICON.earlier} s={13} />Started earlier?</span>} ariaLabel="Started earlier?" heading="Started earlier?" items={earlier}
+              buttonClass={`${ring} flex items-center rounded-md border border-white/10 px-2 py-1 font-mono text-[11px] uppercase tracking-[.1em] text-slate1 hover:border-slate2 hover:text-ink`} />}
+          </div>
+        </>}
+        {k === 'more' && <>
+          <h3 className="mt-1 text-[17px] font-semibold">{data.more} more in {sec.name}</h3>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="find a task…" aria-label="Find a task" className={`${ring} mt-2 w-full rounded-lg border border-white/12 bg-white/[.04] px-2.5 py-1.5 text-[13px] text-ink placeholder:text-slate2`} />
+          <ul className="mt-2 max-h-[190px] space-y-1 overflow-y-auto pr-1">
+            {data.rest.filter((r) => r.toLowerCase().includes(q.toLowerCase())).map((r) => (
+              <li key={r} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-white/[.04]">
+                <span className="min-w-0 flex-1 text-[13px] text-slate1">{r}</span>
+                <button type="button" className={`${ring} rounded px-1.5 font-mono text-[10.5px] uppercase tracking-[.1em] text-cyan hover:bg-cyan/10`}>Start</button>
+                <button type="button" className={`${ring} rounded px-1.5 font-mono text-[10.5px] uppercase tracking-[.1em] text-ok hover:bg-ok/10`}>Done</button>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5 font-mono text-[11px] text-slate2">// sample shows 6 of {data.more}</p>
+        </>}
+        {k === 'offer' && <>
+          <p className="mt-1 text-[13.5px] text-slate1">{it.why}</p>
+          <p className="mt-1 font-mono text-[11.5px] text-slate2">optional. saying no changes nothing.</p>
+          <div className="mt-3 flex gap-2"><Primary className="flex-1 whitespace-nowrap !px-3">Sounds good</Primary><Ghost className="flex-1 whitespace-nowrap !px-3">Not now</Ghost></div>
+        </>}
+        {k === 'project' && <>
+          <p className="mt-2 font-mono text-[11px] uppercase tracking-[.14em] text-slate2">Where I left off</p>
+          <p className="mt-0.5 text-[13px] italic text-slate2">{it.left} (automatic; type a line to replace it)</p>
+          {line('one line, so restarting is easy', 'Save')}
+          <div className="mt-3 flex gap-2"><Ghost className="flex-1 whitespace-nowrap !px-3">Worked on it today</Ghost><Quiet className="flex-1 whitespace-nowrap !px-3">Finished / drop</Quiet></div>
+        </>}
+        {k === 'habit' && <>
+          <p className="mt-1 text-[13.5px] text-slate1">{it.why}</p>
+          <div className="mt-3 flex gap-2"><Primary className="flex-1 whitespace-nowrap !px-3">Did one today</Primary><Quiet className="flex-1 whitespace-nowrap !px-3">Stop repeating</Quiet></div>
+        </>}
+        {k === 'idea' && <>
+          <p className="mt-1 text-[13.5px] text-slate1">An idea you parked. Nothing is due. Start it when you feel like it.</p>
+          <div className="mt-3 flex gap-2"><Primary className="flex-1 whitespace-nowrap !px-3">Start it</Primary><Quiet className="flex-1 whitespace-nowrap !px-3">Remove</Quiet></div>
+        </>}
+        {k === 'add' && <>
+          <p className="mt-1 text-[13.5px] text-slate1">Type it the way it hit you. It lands as a dim idea node.</p>
+          {line('an idea for later', 'Add it')}
+        </>}
+      </div>
+    </div>
+  );
+}
+
+/* While a sector is open the dock shrinks to the command field, so the branches have the room. */
+function CommandPill({ b }) {
+  const [v, setV] = useState('');
+  return (
+    <section aria-label="Ask or delegate" className="dock-glass dock-v2 rise relative mx-auto flex max-w-[760px] items-center gap-2 !rounded-[14px] px-3 py-2" style={{ '--sec': '#2ee6ff' }}>
+      <form onSubmit={(e) => { e.preventDefault(); if (v.trim()) { b.command(v); setV(''); } }} className="cmd-field flex min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-white/[.12] bg-white/[.035] py-1 pl-3 pr-1 focus-within:border-cyan/60">
+        <span aria-hidden="true" className="font-mono text-violet">&gt;</span>
+        <input aria-label="Ask or delegate" value={v} onChange={(e) => setV(e.target.value)} placeholder="What would you like to do?" className="min-w-0 flex-1 bg-transparent py-1 font-mono text-[14px] text-ink placeholder:text-slate2 focus:outline-none" />
+        <button type="submit" aria-label="Send" className={`btn-send ${ring} grid h-8 w-8 place-content-center text-[15px]`}>→</button>
+      </form>
+      <button type="button" onClick={b.stuck} className={`pill ${ring} rounded-md border border-amber/40 bg-amber/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[.1em] text-amber`}>⚡ I’m stuck</button>
+      <span className="font-mono text-[11px] text-slate2">esc closes the sector</span>
+    </section>
+  );
+}
+
+/* Answers, the add-a-task card and errors take over the log column; Dismiss brings the log back. */
+function AnswerPanel({ a, onClose }) {
+  return (
+    <div className="rise mt-2 flex min-h-[236px] grow basis-0 flex-col overflow-hidden rounded-[10px] border border-white/10 bg-white/[.03]" role="region" aria-label="Answer">
+      <div className="flex items-start justify-between gap-2 border-b border-white/[.06] px-3 py-1.5">
+        <span className="text-[12px] text-[#cfc4ff]"><span className="text-violet">&gt; </span>{a.q}</span>
+        <button type="button" onClick={onClose} className={`${ring} flex-none rounded px-1.5 text-[11px] uppercase tracking-[.1em] text-slate2 hover:text-ink`}>Dismiss</button>
+      </div>
+      <div tabIndex={0} className="grow overflow-y-auto whitespace-pre-wrap px-3 py-2 font-sans text-[13.5px] leading-relaxed text-ink">{a.text}
+        {a.files && <ul className="mt-2 space-y-1">{a.files.map((f) => (
+          <li key={f[0]} className="flex items-center gap-2 font-mono text-[12px]"><span aria-hidden="true" className="text-cyan">▤</span><span className="min-w-0 flex-1 text-slate1">{f[0]}<span className="text-slate2"> · {f[1]}</span></span>
+            <button type="button" className={`${ring} rounded border border-cyan/40 px-2 py-px text-[10.5px] uppercase tracking-[.1em] text-cyan hover:bg-cyan/10`}>Open</button></li>))}</ul>}
+        {a.missing && <p className="mt-2 font-mono text-[12px] text-amber">not found: {a.missing}</p>}
+      </div>
+      <p className="border-t border-white/[.06] px-3 py-1 text-[11px] text-slate2">{a.meta}{a.saved && <span className="text-ok"> · saved under “{a.saved}”</span>}</p>
+    </div>
+  );
+}
+
+function AddCard({ p, b }) {
+  const head = p.mode === 'repeat' ? 'Repeat this?' : p.mode === 'reminder' ? 'Text you a reminder?' : 'Add this to your list?';
+  const f = `${ring} rounded-md border border-white/12 bg-white/[.04] px-2 py-1 font-sans text-[13px] text-ink`;
+  return (
+    <div className="rise mt-2 flex min-h-[262px] grow basis-0 flex-col overflow-y-auto rounded-[10px] border border-white/10 bg-white/[.03] px-3 py-2" role="group" aria-label={head}>
+      <p className="text-[11px] uppercase tracking-[.14em] text-cyan">{head}</p>
+      <div className="mt-1.5 grid grid-cols-[52px_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5 text-[11px] text-slate2">
+        <label htmlFor="a-title">task</label><input id="a-title" className={f} value={p.title} onChange={(e) => b.setPendingField('title', e.target.value)} />
+        {p.mode !== 'reminder' && <><label htmlFor="a-list">list</label>
+          <select id="a-list" className={f + (p.unsure ? ' !border-amber/60' : '')} value={p.list} onChange={(e) => { b.setPendingList(e.target.value); b.setPendingField('unsure', false); }}>{p.unsure && <option value="">which list?</option>}{LISTS.map((l) => <option key={l}>{l}</option>)}</select></>}
+        {p.mode === 'repeat'
+          ? <><label htmlFor="a-cad">repeats</label><span className="flex gap-1.5"><select id="a-cad" className={f}><option>daily</option><option>weekly</option></select><input aria-label="Nudge time" type="time" defaultValue="20:00" className={f} /></span></>
+          : <><label htmlFor="a-due">{p.mode === 'reminder' ? 'text at' : 'due'}</label><input id="a-due" type="datetime-local" defaultValue="2026-11-13T17:00" className={f + ' [color-scheme:dark]'} /></>}
+      </div>
+      {p.mode !== 'repeat' && <label className="mt-1.5 flex items-center gap-2 font-sans text-[12.5px] text-slate1"><input type="checkbox" checked={p.mode === 'reminder'} onChange={(e) => b.setPendingField('mode', e.target.checked ? 'reminder' : 'task')} className="accent-cyan" />Text me only, don’t add it to my list</label>}
+      <p aria-live="polite" className={`mt-1.5 text-[12px] ${p.stage === 'added' ? 'text-ok' : p.unsure ? 'text-amber' : 'text-slate2'}`}>
+        {p.stage === 'waiting' ? 'Opening QuickToDo in the background… it lands in a few seconds.' : p.stage === 'added' ? '✓ Added to ' + p.list + '. Undo works for 2 minutes.' : p.stage === 'dupe' ? 'Already on your list (Personal, due Fri). Nothing was added.' : p.unsure ? 'Not sure which list. Pick one.' : ' '}</p>
+      <div className="mt-auto flex flex-wrap gap-1 pt-1 font-sans">
+        {p.stage === 'added' ? <>
+          <button type="button" onClick={() => b.setPending(null)} className={`${ring} rounded-md border border-white/15 px-3 py-1 text-[12px] text-ink`}>Undo</button>
+          <button type="button" onClick={() => b.setPending(null)} className={`${ring} rounded-md px-3 py-1 text-[12px] text-slate1 hover:text-ink`}>Close</button>
+        </> : <>
+          <button type="button" disabled={p.unsure || p.stage === 'waiting'} onClick={b.confirmAdd} className={`${ring} rounded-md border border-cyan/70 bg-cyan/15 px-3 py-1 text-[12px] font-semibold uppercase tracking-[.08em] text-[#dffaff] disabled:opacity-40`}>{p.mode === 'reminder' ? 'Text me' : 'Add'}</button>
+          <button type="button" onClick={b.askInstead} className={`${ring} rounded-md px-3 py-1 text-[12px] text-slate1 hover:bg-white/5 hover:text-ink`}>Not a task, ask it</button>
+          <button type="button" onClick={b.cancelAdd} className={`${ring} rounded-md px-3 py-1 text-[12px] text-slate1 hover:bg-white/5 hover:text-ink`}>Cancel</button>
+        </>}
+      </div>
+    </div>
+  );
+}
+
+/* Options, open on its save-to picker (searchable, arrows and Enter; Esc closes only the picker). */
+function PickerPop() {
+  const [q, setQ] = useState('');
+  const rows = ['auto (match the question to a task)', 'off (don’t save)', 'Read Chapter 5', 'Lab 9: Firewall rules', 'Apply to 10 internships (week of Nov 9)', 'Network traffic analyzer'].filter((r) => r.toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div className="menu-glass rise absolute bottom-full left-[86px] z-30 mb-2.5 w-[330px] rounded-[10px] p-1.5 font-sans">
+      <p className="px-2.5 pb-1 pt-1.5 font-mono text-[10.5px] uppercase tracking-[.14em] text-slate2">Options</p>
+      <div className="flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[13px] text-slate1"><span className="flex-1">Follow up on last answer</span><span aria-hidden="true" className="relative h-[16px] w-[28px] rounded-full bg-cyan/80"><span className="absolute left-[14px] top-[2px] h-[12px] w-[12px] rounded-full bg-white" /></span></div>
+      <div className="mx-1 rounded-lg border border-white/10 bg-black/20 p-1.5">
+        <p className="px-1 pb-1 font-mono text-[10.5px] uppercase tracking-[.14em] text-slate2">Save long answers to</p>
+        <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} role="combobox" aria-expanded="true" aria-controls="pk" placeholder="find a task…" className={`${ring} w-full rounded-md border border-white/12 bg-white/[.04] px-2 py-1 text-[13px] text-ink placeholder:text-slate2`} />
+        <ul id="pk" role="listbox" className="mt-1 max-h-[160px] overflow-y-auto">{rows.map((r, i) => (
+          <li key={r} role="option" aria-selected={i === 2} className={`rounded-md px-2 py-1 text-[13px] ${i === 2 ? 'bg-cyan/15 text-ink' : 'text-slate1'}`}>{r}</li>))}</ul>
+      </div>
+    </div>
+  );
+}
+
+/* The app's welcome hands off to the dashboard: the welcome fades, the points gather, dials light one by one, the dock rises. */
+function Welcome({ on }) {
+  return (
+    <div aria-hidden={!on} className="pointer-events-none fixed inset-0 z-50 grid place-content-center bg-[#05061a] text-center" style={{ opacity: on ? 1 : 0, transition: 'opacity .9s ease .2s' }}>
+      <svg width="92" height="92" viewBox="-46 -46 92 92" className="mx-auto" aria-hidden="true">
+        <path d="M-22 10 C-30 -20 0 -34 14 -14 C26 4 4 22 -8 6 C-14 -4 0 -14 8 -6" fill="none" stroke="#2ee6ff" strokeWidth="3" strokeLinecap="round" />
+        <circle cx="8" cy="-6" r="5" fill="#fbbf24" />
+      </svg>
+      <p className="mt-5 font-mono text-[22px] font-light tracking-[.55em] text-[#7fd8ea]">THALAMUS<span className="text-amber">.</span></p>
+      <p className="mt-3 text-[15px] text-slate1">Good afternoon.</p>
+      <p className="mt-1 font-mono text-[12px] text-slate2">// waking up the neurons</p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ the dock (approved, unchanged) */
+function Dock({ b, clock, skin, view = 'live', low = false, today = TODAY }) {
+  const t = b.task, next = b.queue[1], m = b.mode;
+  const [sel, setSel] = useState('now');
+  const [why, setWhy] = useState(false);
+  const [v, setV] = useState('');
+  const input = useRef(null), box = useRef(null), rail = useRef(null), flyer = useRef(null);
+  const [leaving, setLeaving] = useState(false);
+  const SAVE = ['auto', 'this task', 'off'];
+  const [saveTo, setSaveTo] = useState('auto');
+  useEffect(() => { setV(view === 'autofill' ? 'i’m stuck on lab 9: fi' : ''); }, [view]);
+  const ghost = /fi$/.test(v) && v.startsWith('i’m stuck on lab 9') ? 'rewall rules' : '';
+  const finish = () => {
+    window.dispatchEvent(new CustomEvent('thalamus-done'));
+    const dots = rail.current ? rail.current.querySelectorAll('[data-dot]') : [];
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || !dots.length || !flyer.current || leaving) return b.done();
+    const a = dots[0].getBoundingClientRect(), host = rail.current.getBoundingClientRect();
+    const dx = (dots[1] ? dots[1].getBoundingClientRect().left : a.left + 240) - a.left;
+    const el = flyer.current;
+    el.style.left = (a.left - host.left) + 'px'; el.style.top = (a.top - host.top) + 'px';
+    setLeaving(true);
+    const anim = el.animate([
+      { transform: 'translateX(0) scale(1)', opacity: 1 },
+      { transform: 'translateX(0) scale(1.9)', opacity: 1, offset: 0.22 },
+      { transform: 'translateX(' + dx * 0.6 + 'px) scale(1.25)', opacity: 1, offset: 0.7 },
+      { transform: 'translateX(' + dx + 'px) scale(1)', opacity: dots[1] ? 0.9 : 0 },
+    ], { duration: 950, easing: 'cubic-bezier(.45,0,.2,1)' });
+    anim.onfinish = () => { b.done(); setLeaving(false); };
+  };
+  useEffect(() => { if (m.k !== 'idle') setSel('now'); }, [m.k]);
+  useEffect(() => setWhy(false), [t && t.id]);
+  useEffect(() => { const go = () => { if (box.current) box.current.scrollTop = box.current.scrollHeight; }; go(); const t = setTimeout(go, 400); return () => clearTimeout(t); }, [b.log.length, b.busy, b.pending]);
+
+  /* Only today, only what is still ahead or on right now. A stop drops off the rail the moment it ends. */
+  const live = today.filter((e) => e.end > clock);
+  const railOn = live.length > 0;               /* the rail is drawn only on days with a class or test still ahead */
+  const stops = [
+    { id: 'now', top: m.k === 'work' ? 'Working' : m.k === 'break' ? 'Break' : 'Now', title: t ? t.title : 'Nothing', color: t ? SECTOR[t.sector] : '#8a92b4', frac: 1 },
+    ...live.map((e) => ({ id: e.id, top: e.start > clock ? fmtClock(e.start) + ' · ' + e.kind : e.kind + ' · on now', title: e.title, color: '#fbbf24', frac: e.start > clock ? Math.max(0.06, 1 - (e.start - clock) / 180) : Math.max(0.06, (e.end - clock) / (e.end - e.start)) })),
+  ];
+  useEffect(() => { if (!stops.some((x) => x.id === sel)) setSel('now'); }, [clock]);
+  const soon = live.filter((e) => e.start > clock).sort((a, c) => a.start - c.start)[0];
+  const on = live.find((e) => e.start <= clock);
+  const gap = soon ? soon.start - clock : null;
+  const blockLen = t ? (low ? Math.min(20, t.block) : t.block) : 0;
+  const together = soon ? live.filter((e) => e.start === soon.start).map((e) => e.kind.toLowerCase()) : [];
+  const railKeys = (e) => {
+    const i = stops.findIndex((s) => s.id === sel), n = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : -1;
+    if (n >= 0 && n < stops.length) { setSel(stops[n].id); document.getElementById('stop-' + stops[n].id).focus(); }
+  };
+  const ev = today.find((e) => e.id === sel);
+  const doneCount = 1 + b.log.filter((r) => r.kind === 'done').length;
+  const last = b.log[b.log.length - 1];
+  const notNow = [
+    { label: 'Snooze 1 hour', run: () => b.snooze('1 hour') },
+    { label: 'Snooze 3 hours', run: () => b.snooze('3 hours') },
+    { label: 'Snooze until tomorrow', run: () => b.snooze('tomorrow') },
+    { label: 'Not this one', hint: 'next best', run: b.skip },
+    '-',
+    { label: b.pinned ? 'Unpin' : 'Pin to the top for today', run: b.pin },
+    { label: 'I started 15 min ago', run: () => b.start(15) },
+    { label: 'I started 30 min ago', run: () => b.start(30) },
+  ];
+  const send = (e) => { e.preventDefault(); if (v.trim()) { b.command(v); setV(''); } };
+
+  return (
+    <section aria-label="Dock" className={`dock-glass relative rounded-[26px] ${skin === 'v2' ? 'dock-v2' : ''}`} style={{ '--sec': t ? SECTOR[t.sector] : '#8a92b4' }}>
+
+      {railOn && <div className="flex items-center gap-3 border-b border-white/[.06] px-5 py-1.5">
+        <div ref={rail} role="tablist" aria-label="Today, in order" onKeyDown={railKeys} className="relative flex min-w-0 items-center gap-1">
+          <span ref={flyer} aria-hidden="true" className="pointer-events-none absolute z-10 h-[10px] w-[10px] rounded-full bg-ok" style={{ opacity: leaving ? 1 : 0, boxShadow: '0 0 14px 4px rgba(74,222,128,.55)' }} />
+          {stops.map((s, i) => (
+            <React.Fragment key={s.id}>
+              {i > 0 && <span aria-hidden="true" className="h-px w-7 flex-none bg-white/20" />}
+              <button id={'stop-' + s.id} role="tab" type="button" aria-selected={sel === s.id} aria-controls="dock-detail" tabIndex={sel === s.id ? 0 : -1} onClick={() => setSel(s.id)}
+                className={`rail-stop ${ring} rise flex min-w-0 items-center gap-2 rounded-full px-3 py-1.5 text-left ${s.id === 'now' ? 'flex-none' : ''} ${sel === s.id ? 'bg-white/[.07]' : 'hover:bg-white/[.04]'}`}>
+                {skin === 'v2' ? (
+                  <svg data-dot aria-hidden="true" width="18" height="18" viewBox="-9 -9 18 18" className="flex-none" style={{ filter: sel === s.id ? 'drop-shadow(0 0 4px ' + s.color + ')' : 'none' }}>
+                    <circle r="6.5" fill="none" stroke="#fff" strokeOpacity=".16" strokeWidth="1.7" />
+                    <circle r="6.5" fill="none" stroke={s.color} strokeWidth="1.7" strokeLinecap="round" strokeDasharray={(s.frac * 40.8) + ' 40.8'} transform="rotate(-90)" />
+                    {s.id === 'now' && <circle r="2.5" fill={s.color} />}
+                  </svg>
+                ) : <span aria-hidden="true" data-dot className="h-[10px] w-[10px] flex-none rounded-full" style={{ background: s.color, boxShadow: sel === s.id ? '0 0 0 3px ' + s.color + '40' : 'none' }} />}
+                <span className="flex-none font-mono text-[10.5px] uppercase tracking-[.12em] text-slate2">{s.top}</span>
+                {s.id !== 'now' && <span className={`whitespace-nowrap text-[13px] ${sel === s.id ? 'text-ink' : 'text-slate1'}`}>{s.title}</span>}
+              </button>
+            </React.Fragment>
+          ))}
+          {stops.length === 1 && <span className="ml-2 flex-none font-mono text-[11px] text-slate2">· nothing else fixed today</span>}
+        </div>
+        <span className="flex-1" />
+        <span data-tether-r className="hidden flex-none items-center gap-2 font-mono text-[11px] text-slate2 lg:flex">
+          <span className="flex items-center gap-1" aria-hidden="true">{Array.from({ length: doneCount }, (_, i) => <span key={i} className="rise h-2 w-2 rounded-full bg-ok" />)}</span>
+          <span className="text-slate1">{doneCount} done today</span>
+        </span>
+      </div>}
+
+      <div className="grid md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+
+        {/* left: the one answer */}
+        <div className="card-left flex min-w-0 flex-col px-7 py-4">
+          <div id="dock-detail" role="tabpanel" aria-labelledby={'stop-' + sel} className="flex flex-1 flex-col" style={{ opacity: leaving ? 0.35 : 1, transition: 'opacity .3s' }}>
+          {sel === 'now' && (m.k !== 'idle' ? <Stage b={{ ...b, done: finish }} title={t ? t.title : ''} /> : !t ? (
+            <div className="flex h-full flex-col justify-center"><h2 className="text-[24px] font-semibold">Nothing needs you right now.</h2><p className="mt-1 text-slate1">That's allowed.</p></div>
+          ) : (
+            <div className="rise flex flex-1 flex-col" key={t.id}>
+              <div className="flex items-center justify-between"><span data-tether-l><Eyebrow>Do this now</Eyebrow></span><SectorTag t={t} /></div>
+              <h2 className="mt-1.5 text-[30px] font-semibold leading-tight tracking-tight">{t.title}
+                {b.pinned && <span className="ml-3 align-middle font-mono text-[11px] font-medium uppercase tracking-[.12em] text-amber">pinned</span>}</h2>
+              <p className="mt-1 font-mono text-[12.5px] text-slate1">{t.est} · {low && /slipped/.test(t.when) ? 'past due' : t.when}</p>
+              <p className="mt-2.5 text-[14.5px] leading-relaxed text-slate1">{low && /slipped/.test(t.when) ? 'Past its deadline. No need to do all of it: one small piece at a time.' : t.why}{' '}
+                <button type="button" aria-expanded={why} aria-controls="why-more" onClick={() => setWhy(!why)} className={`${ring} rounded text-slate2 underline decoration-dotted underline-offset-4 hover:text-ink`}>{why ? 'less' : 'why this?'}</button>
+              </p>
+              {why && <p id="why-more" className="rise mt-1.5 border-l-2 border-white/10 pl-3 text-[13.5px] leading-relaxed text-slate2">{t.more}</p>}
+              {(() => {
+                const hot = on || (soon && gap <= 90);
+                return (
+                  <p className={`note-pill mt-3 flex items-center gap-3 rounded-full border py-1.5 pl-3.5 pr-4 text-[13px] ${hot ? 'border-amber/20 bg-amber/[.07] text-ink' : 'border-white/[.08] bg-white/[.025] text-slate1'}`}>
+                    <span aria-hidden="true" className={`h-1.5 w-1.5 flex-none rounded-full ${hot ? 'bg-amber' : 'bg-ok'}`} />
+                    <span className={`flex-none font-mono text-[11px] uppercase leading-none tracking-[.12em] ${hot ? 'text-amber' : 'text-ok'}`}>{on ? on.kind + ' on now' : soon ? fmtClock(soon.start) + ' · in ' + dur(gap) : 'clear'}</span>
+                    <span className="min-w-0 leading-snug">{on ? 'Until ' + fmtClock(on.end) + '. This will still be here after.'
+                      : !soon ? 'Nothing else fixed today. Room for the full ' + blockLen + ' min.'
+                      : !hot ? 'Nothing fixed until then. Room for the full ' + blockLen + ' min.'
+                      : cap(together.join(' and ')) + (together.length > 1 ? ' both start then.' : ' starts then.')}</span>
+                  </p>
+                );
+              })()}
+              <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
+                <Primary onClick={() => b.start()} className="min-w-[170px]">▶&nbsp; Start {blockLen} min</Primary>
+                <Ghost onClick={finish}>✓&nbsp; Done</Ghost>
+                <Menu label={<>Not now <span aria-hidden="true" className="text-[10px]">▾</span></>} ariaLabel="Not now: snooze, skip, pin, started earlier" heading="Not now" items={notNow}
+                  buttonClass={`btn-ghost ${ring} rounded-full border border-line px-5 py-2.5 text-[14px] font-medium text-slate1 hover:border-slate2 hover:text-ink`} />
+                {b.lastCheckin && <span className="ml-auto font-mono text-[11px] text-slate2">last check-in: {b.lastCheckin}</span>}
+              </div>
+            </div>
+          ))}
+          {ev && (
+            <div className="rise" key={ev.id}>
+              <Eyebrow className="!text-amber">{ev.kind} · {ev.start > clock ? fmtClock(ev.start) + ' · in ' + dur(ev.start - clock) : 'on now · until ' + fmtClock(ev.end)}</Eyebrow>
+              <h2 className="mt-1.5 text-[24px] font-semibold leading-tight tracking-tight">{ev.title}</h2>
+              {ev.note && <p className="mt-2.5 text-[14.5px] text-slate1">{ev.note}</p>}
+              {ev.files && (
+                <ul className="mt-3 grid gap-1.5 sm:grid-cols-2" aria-label="This week's notes (sample names)">
+                  {ev.files.map((f) => (
+                    <li key={f}><button type="button" className={`${ring} w-full rounded-lg border border-white/10 px-3 py-1.5 text-left text-[13px] text-slate1 hover:border-slate2 hover:text-ink`}>
+                      <span aria-hidden="true" className="mr-2 text-cyan">▤</span>{f}</button></li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-3 font-mono text-[12px] text-slate2">// fixed time. nothing to start here; it shapes how long a block fits.</p>
+            </div>
+          )}
+          {sel === 'after' && next && (
+            <div className="rise">
+              <div className="flex items-center justify-between"><Eyebrow>After that</Eyebrow><SectorTag t={next} /></div>
+              <h2 className="mt-1.5 text-[24px] font-semibold leading-tight tracking-tight">{next.title}</h2>
+              <p className="mt-1 font-mono text-[12.5px] text-slate1">{next.est} · {next.when}</p>
+              <p className="mt-2.5 text-[14.5px] text-slate1">{next.why}</p>
+              <div className="mt-4"><Ghost onClick={() => { b.skip(); setSel('now'); }}>Do this one instead</Ghost></div>
+            </div>
+          )}
+        </div>
+        </div>
+
+        {/* right: one terminal. the log is the scrollback, the prompt sits under it */}
+        <div className="flex min-w-0 flex-col border-t border-white/[.06] px-6 py-4 font-mono md:border-l md:border-t-0"
+          onClick={(e) => { if (!e.target.closest('button,input,select')) input.current && input.current.focus(); }}>
+          <div className="flex items-center justify-between text-[11px] uppercase tracking-[.14em] text-slate2">
+            <span>{b.answer ? 'answer' : b.pending ? 'add a task' : 'mission log'}</span>
+            <span className="flex items-center gap-3 normal-case tracking-normal">
+              {!railOn && <span className="flex items-center gap-1.5"><span className="flex gap-1" aria-hidden="true">{Array.from({ length: doneCount }, (_, i) => <span key={i} className="h-1.5 w-1.5 rounded-full bg-ok" />)}</span>{doneCount} done today</span>}
+              <span><span aria-hidden="true" className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-ok align-middle" />synced 4:54 PM</span></span>
+          </div>
+          {b.answer ? <AnswerPanel a={b.answer} onClose={() => b.setAnswer(null)} />
+            : b.pending ? <AddCard p={b.pending} b={b} />
+            : <ul id="mlog" ref={box} role="log" aria-label="Mission log" className="mt-2 h-0 min-h-[92px] grow basis-0 space-y-[5px] overflow-y-auto pr-1 text-[12px]">{b.log.map((r) => <LogRow key={r.id} r={r} />)}
+              {b.undo && <li className="flex justify-end"><button type="button" onClick={() => { b.say('done', 'undone: ' + b.undo + ' (back in QuickToDo)'); b.setUndo(null); }} className={`${ring} rounded border border-white/15 px-2 py-px text-[10.5px] uppercase tracking-[.1em] text-slate1 hover:text-ink`}>Undo done · 2 min</button></li>}</ul>}
+
+          <div aria-live="polite" className="text-[12px]">
+            {b.busy && (
+              <div className="rise mt-2" role="status">
+                <div className="h-[3px] overflow-hidden rounded-full bg-white/10"><div className="bar h-full rounded-full bg-gradient-to-r from-cyan to-violet" style={{ width: b.busy.pct + '%' }} /></div>
+                <p className="mt-1 flex justify-between gap-3 text-slate2"><span><span className="text-slate1">{b.busy.label}</span> · {b.busy.jargon || 'untangling the synapses'}</span><span className="flex-none">running · {b.busy.secs || 4} s · {b.busy.pct}%</span></p>
+              </div>
+            )}
+            {b.err && (
+              <div className="rise mt-2" role="alert">
+                <div className="h-[3px] overflow-hidden rounded-full bg-white/10"><div className="h-full w-full rounded-full bg-[#ff6b7a]" /></div>
+                <p className="mt-1 flex flex-wrap items-center gap-2 text-slate1"><span className="text-[#ff9aa5]">It didn’t finish.</span><span className="text-slate2">{b.err}</span>
+                  <button type="button" onClick={() => b.setErr(null)} className={`${ring} ml-auto rounded border border-white/15 px-2 py-px text-[10.5px] uppercase tracking-[.1em] text-ink`}>Try again</button>
+                  <button type="button" onClick={() => b.setErr(null)} className={`${ring} rounded px-2 py-px text-[10.5px] uppercase tracking-[.1em] text-slate2 hover:text-ink`}>Dismiss</button></p>
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={send} className="cmd-field mt-2.5 flex items-center gap-2 rounded-2xl border border-white/[.12] bg-white/[.035] py-1.5 pl-3.5 pr-1.5 focus-within:border-cyan/60 focus-within:bg-white/[.05]">
+            <span aria-hidden="true" className="text-violet">&gt;</span>
+            <label htmlFor="cmd" className="sr-only">Ask, delegate, or type start, done, snooze</label>
+            <span className="relative flex min-w-0 flex-1">
+              {ghost && <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 flex items-center whitespace-pre py-1 text-[14px]"><span className="invisible">{v}</span><span className="text-slate2">{ghost}</span><span className="ml-2 rounded border border-white/15 px-1 text-[10px] uppercase tracking-[.1em] text-slate2">tab</span></span>}
+              <input id="cmd" ref={input} value={v} onChange={(e) => setV(e.target.value)} autoComplete="off" spellCheck="false" placeholder="What would you like to do?"
+                onKeyDown={(e) => { if (e.key === 'Tab' && ghost) { e.preventDefault(); setV(v + ghost); } }}
+                className="relative min-w-0 flex-1 bg-transparent py-1 text-[14px] text-ink placeholder:text-slate2 focus:outline-none" /></span>
+            <button type="submit" aria-label="Send" title="Send (Enter)"
+              className={`btn-send ${ring} grid h-8 w-8 flex-none place-content-center rounded-full bg-gradient-to-br from-[#4fd1e6] to-[#7c8cff] text-[15px] font-semibold text-[#071022] transition-opacity ${v.trim() ? '' : 'opacity-50'}`}>→</button>
+          </form>
+          {ghost && <ul className="rise mt-1 rounded-md border border-white/10 bg-black/30 px-2 py-1 text-[12px]" aria-label="Task titles that match">
+            <li className="text-ink">{v}<span className="text-slate2">{ghost}</span> <span className="text-slate2">· Schoolwork · Tab finishes it</span></li>
+            <li className="text-slate2">lab 9 firewall rules notes · file on your Desktop</li></ul>}
+          <div className="relative mt-2 flex flex-nowrap items-center gap-1.5 whitespace-nowrap">
+            {view === 'picker' && <PickerPop />}
+            <button type="button" onClick={b.stuck} disabled={!t} title="Get a five minute first step for the current task"
+              className={`pill ${ring} rounded-full border border-amber/40 bg-amber/10 px-3 py-1 font-sans text-[12px] font-medium text-amber hover:bg-amber/20 disabled:opacity-40`}><span aria-hidden="true">⚡ </span>I'm stuck</button>
+            <Menu label={<><span aria-hidden="true">⚙ </span>Options <span aria-hidden="true" className="text-[9px]">▾</span></>}
+              buttonClass={`pill ${ring} rounded-full border border-line px-3 py-1 font-sans text-[12px] font-medium text-slate1 hover:border-slate2 hover:text-ink`}
+              heading="Options" ariaLabel="Options"
+              items={[{ label: 'Follow up on last answer', checked: b.followUp, run: () => b.setFollowUp(!b.followUp) },
+                { label: 'Save long answers', value: saveTo, run: () => setSaveTo(SAVE[(SAVE.indexOf(saveTo) + 1) % SAVE.length]) }]} />
+            <span aria-hidden="true" className="mx-1 h-4 w-px bg-white/10" />
+            {EXAMPLES.map((x, i) => (
+              <button key={x} type="button" onClick={() => { b.command(x); input.current && input.current.focus(); }}
+                className={`pill chip ${ring} flex-none rounded-full border border-white/10 px-2.5 py-0.5 text-[11.5px] text-slate1 hover:border-slate2 hover:text-ink ${i ? 'hidden min-[1700px]:block' : ''}`}><span className="text-slate2">try › </span>{x}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const NOWMAP = { Schoolwork: 'school', Internships: 'intern', 'Security Projects': 'security', Personal: 'personal' };
+function Tether({ color, lowPower = false }) {
+  const main = useRef(null), glow = useRef(null), p1 = useRef(null), p2 = useRef(null), up = useRef(null);
+  useEffect(() => {
+    const still = lowPower || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let raf, burst = 0;
+    const onDone = () => { burst = performance.now(); };
+    window.addEventListener('thalamus-done', onDone);
+    const put = (el, pt, show) => { el.setAttribute('cx', pt.x); el.setAttribute('cy', pt.y); el.style.opacity = show ? 1 : 0; };
+    const tick = (now) => {
+      const a = document.querySelector('[data-now]'), P = main.current;
+      const left = a ? a.getBoundingClientRect().left + 110 < window.innerWidth / 2 : true;
+      /* no rail today: land on the card's eyebrow (left) or the log header (right) */
+      const z = left ? (document.querySelector('[data-dot]') || document.querySelector('[data-tether-l]')) : (document.querySelector('[data-tether-r]') || document.querySelector('[data-dot]') || document.querySelector('[data-tether-l]'));
+      if (a && z && P) {
+        const A = a.getBoundingClientRect(), Z = z.getBoundingClientRect(), side = left ? -1 : 1;
+        const x0 = A.left + A.width / 2 + side * 50, y0 = A.top + 52, x1 = Z.left + (left ? Z.width / 2 : Z.width - 8), y1 = Z.top - 4;
+        const out = Math.max(70, Math.min(230, left ? x0 - 18 : window.innerWidth - x0 - 18));
+        const d = 'M' + x0 + ' ' + y0 + ' C' + (x0 + side * out) + ' ' + (y0 + 10) + ', ' + (x1 + side * Math.min(out, 160)) + ' ' + (y1 - 190) + ', ' + x1 + ' ' + y1;
+        P.setAttribute('d', d); glow.current.setAttribute('d', d); P.style.opacity = 1; glow.current.style.opacity = 1;
+        const L = P.getTotalLength(), u = now / 1000 * 0.2;
+        put(p1.current, P.getPointAtLength(L * (u % 1)), !still); put(p2.current, P.getPointAtLength(L * ((u + 0.5) % 1)), !still);
+        const k = burst ? (now - burst) / 900 : 2;
+        if (k < 1) { put(up.current, P.getPointAtLength(L * (1 - k * k * (3 - 2 * k))), true); }
+        else { up.current.style.opacity = 0; if (burst) { burst = 0; a.animate([{ filter: 'brightness(2.6)', transform: 'translateX(-50%) scale(1.08)' }, { filter: 'brightness(1)', transform: 'translateX(-50%) scale(1)' }], { duration: 800, easing: 'ease-out' }); } }
+      } else if (P) { P.style.opacity = 0; glow.current.style.opacity = 0; p1.current.style.opacity = 0; p2.current.style.opacity = 0; up.current.style.opacity = 0; }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('thalamus-done', onDone); };
+  }, [lowPower]);
+  return (
+    <svg aria-hidden="true" className="pointer-events-none fixed inset-0 z-20 h-full w-full">
+      <path ref={glow} fill="none" stroke={color} strokeOpacity=".16" strokeWidth="6" style={{ filter: 'blur(4px)' }} />
+      <path ref={main} fill="none" stroke={color} strokeOpacity=".6" strokeWidth="1.2" />
+      <circle ref={p1} r="2.4" fill="#fff" style={{ filter: 'drop-shadow(0 0 5px ' + color + ')' }} />
+      <circle ref={p2} r="2.4" fill="#fff" style={{ filter: 'drop-shadow(0 0 5px ' + color + ')' }} />
+      <circle ref={up} r="5" fill="#fff" style={{ opacity: 0, filter: 'drop-shadow(0 0 10px ' + color + ')' }} />
+    </svg>
+  );
+}
+
+/* Step 0: every view the build needs, in the new style. The footer's "view" control jumps the page into each one. */
+const VIEWS = [
+  ['Live', [['live', 'live (click around)']]],
+  ['Sectors', [['cluster', 'sector open'], ['card', 'task card open'], ['pinned', 'pinned task (jump from top bar)'], ['more', '+N more'], ['personal', 'empty sector'], ['security', 'Security: one project']]],
+  ['Play', [['play', 'Play open'], ['project', 'project: where I left off'], ['offer', 'offer'], ['habit', 'repeating item'], ['idea', 'parked idea'], ['addidea', 'add an idea']]],
+  ['Command', [['loading', 'loading bar'], ['answer', 'answer (model)'], ['lookup', 'answer (files, no model)'], ['error', 'didn’t finish'], ['add', 'add-a-task card'], ['addunsure', 'add: which list?'], ['addwait', 'add: QuickToDo opening'], ['added', 'add: added + undo'], ['dupe', 'add: already on list'], ['repeat', 'repeat this?'], ['reminder', 'text me a reminder?'], ['picker', 'options + save-to picker'], ['autofill', 'autofill']]],
+  ['Blocks', [['count', '3-2-1'], ['work', 'working'], ['over', 'block over (time)'], ['overdone', 'block over (done)'], ['break', 'break'], ['checkin', 'check-in'], ['next', 'next block'], ['undo', 'done + undo']]],
+  ['Health', [['stale', 'stale snapshot'], ['unreadable', 'unreadable snapshot'], ['reload', 'out of date: reload'], ['empty', 'nothing to do'], ['nodata', 'no data yet']]],
+  ['Modes', [['lowenergy', 'low energy'], ['lowpower', 'low power'], ['noclass', 'no class today (no rail)']]],
+  ['App', [['welcome', 'welcome hand-off (replays)']]],
+];
+const VIEW_IDS = VIEWS.flatMap(([, v]) => v.map((x) => x[0]));
+const CLEAR = SECTORS.map((s) => (s.id === 'play' ? s : { ...s, count: 0, week: 0, soon: 0, next: null, now: false }));
+
+function App() {
+  const b = useBrain();
+  const [clock, setClock] = useState(1013);   /* demo clock, 4:53 PM */
+  const [wide, setWide] = useState(1080);
+  const [look, setLook] = useState(6);
+  const [skin, setSkin] = useState('v2');      /* dock styling: v1 = as approved, v2 = instrument restyle */
+  const [view, setView] = useState(() => { const h = location.hash.slice(1); return VIEW_IDS.includes(h) ? h : 'live'; });
+  const [open, setOpen] = useState(null), [sel, setSel] = useState(null);
+  const [low, setLow] = useState(false), [lowPower, setLowPower] = useState(false);
+  const [sync, setSync] = useState('ok'), [today, setToday] = useState(TODAY), [sectors, setSectors] = useState(SECTORS), [intro, setIntro] = useState(false), [welcome, setWelcome] = useState(false);
+  useEffect(() => {
+    history.replaceState(null, '', '#' + view);
+    b.reset(); setOpen(null); setSel(null); setLow(false); setLowPower(false); setSync('ok'); setToday(TODAY); setSectors(SECTORS); setClock(1013);
+    const P = (x) => b.setPending({ raw: 'remind me to email Dr. Lee about the lab friday', title: 'Email Dr. Lee about the lab', list: 'Network Security', due: 'friday', mode: 'task', stage: 'ask', ...x });
+    const now = Date.now(), T = TASKS[0];
+    const go = {
+      cluster: () => setOpen('school'), card: () => { setOpen('school'); setSel('s1'); }, pinned: () => { setOpen('school'); setSel('s2'); }, more: () => { setOpen('school'); setSel('more'); },
+      personal: () => setOpen('personal'), security: () => { setOpen('security'); setSel('p1'); },
+      play: () => setOpen('play'), project: () => { setOpen('play'); setSel('pr1'); }, offer: () => { setOpen('play'); setSel('o1'); }, habit: () => { setOpen('play'); setSel('h1'); }, idea: () => { setOpen('play'); setSel('id1'); }, addidea: () => { setOpen('play'); setSel('add'); },
+      loading: () => b.setBusy({ label: 'free model 1 of 3', pct: 55, q: 'make me 10 flashcards for chapter 5', jargon: 'consulting the hippocampus', secs: 21 }),
+      answer: () => b.setAnswer({ q: 'I’m stuck: Read Chapter 5', text: 'First five minutes: open Chapter 5 and read only the headings.\nWrite down the one that sounds most like the lab you just did.\nThat counts. Stop there if you want.', meta: 'free · GLM-5.3-Flash · 1 attempt · 2.1 s', saved: 'Read Chapter 5' }),
+      lookup: () => b.setAnswer({ q: 'do you have teaching notes for module 5 and 6 for network security', text: 'Found 3 files in Network Security.', files: [['Module 5 teaching notes.html', 'Network Security / Week 9'], ['Module 6 teaching notes.html', 'Network Security / Week 10'], ['Module 6 annotated deck.pdf', 'Network Security / Week 10']], missing: 'Module 5 annotated deck', meta: 'no model · searched your Desktop in 0.1 s' }),
+      error: () => b.setErr('All 3 free models were busy, then Haiku timed out. Nothing was saved.'),
+      add: () => P(), addunsure: () => P({ title: 'Renew my ID', list: '', unsure: true, due: '' }), addwait: () => P({ stage: 'waiting' }), added: () => P({ stage: 'added' }), dupe: () => P({ stage: 'dupe' }),
+      repeat: () => P({ title: 'Stretch 10 min', list: 'Play', mode: 'repeat' }), reminder: () => P({ title: 'Call mom', mode: 'reminder' }),
+      count: () => b.setMode({ k: 'count', n: 3, plan: 30 }), work: () => b.setMode({ k: 'work', t0: now - 12 * 60000 - 34000, plan: 30 }),
+      over: () => b.setMode({ k: 'over', why: 'time', title: T.title, plan: 50 }), overdone: () => b.setMode({ k: 'over', why: 'task-done', title: T.title }),
+      break: () => b.setMode({ k: 'break', t0: now - 2 * 60000, mins: 10, sug: 'Golf at the range, 45 min' }), checkin: () => b.setMode({ k: 'checkin' }),
+      next: () => { b.setLastCheckin('yes'); b.setQueue(TASKS.slice(1)); }, undo: () => { b.setUndo(T.title); b.setQueue(TASKS.slice(1)); },
+      stale: () => setSync('stale'), unreadable: () => setSync('unreadable'), reload: () => b.setMode({ k: 'reload' }),
+      empty: () => { b.setQueue([]); setSectors(CLEAR); }, nodata: () => { b.setQueue([]); setSectors(CLEAR); setSync('none'); },
+      lowenergy: () => setLow(true), lowpower: () => setLowPower(true), noclass: () => setToday([]),
+      welcome: () => { setWelcome(true); setIntro(true); setTimeout(() => setWelcome(false), 1400); setTimeout(() => setIntro(false), 1700); },
+    }[view];
+    go && go();
+  }, [view]);
+  const step = (d) => setView(VIEW_IDS[(VIEW_IDS.indexOf(view) + d + VIEW_IDS.length) % VIEW_IDS.length]);
+  const label = VIEWS.flatMap(([, v]) => v).find((x) => x[0] === view)[1];
+  return (
+    <div className="flex h-full flex-col">
+      <Welcome on={welcome} />
+      {look === 0 ? (
+        <div className="stage relative min-h-0 flex-1 overflow-hidden" aria-hidden="true">
+          <img src={window.BRAIN} alt="" className="absolute inset-0 h-full w-full select-none object-contain object-top" draggable="false" />
+        </div>
+      ) : <BrainStage look={look} nowId={b.task ? NOWMAP[b.task.sector] : null} open={open} setOpen={setOpen} sel={sel} setSel={setSel} b={b}
+            low={low} setLow={setLow} lowPower={lowPower} setLowPower={setLowPower} sync={sync} sectors={sectors} intro={intro} pinnedCount={view === 'empty' || view === 'nodata' ? 0 : 1} />}
+      {skin === 'v2' && look === 6 && b.task && !open && !intro && <Tether color={SECTOR[b.task.sector]} lowPower={lowPower} />}
+      <main className="relative z-10 mx-auto -mt-7 w-full flex-none px-4 pb-4" style={{ maxWidth: open ? 820 : wide, transform: intro ? 'translateY(40px)' : 'none', opacity: intro ? 0 : 1, transition: 'transform .8s cubic-bezier(.3,.7,.2,1) .5s, opacity .6s ease .5s' }}>
+        {open ? <CommandPill b={b} /> : (
+          <div className={`relative ${lowPower ? '' : 'dock-float'}`}>
+            <div aria-hidden="true" className="dock-aura" style={lowPower ? { animation: 'none' } : undefined} />
+            <Dock b={b} clock={clock} skin={skin} view={view} low={low} today={today} />
+          </div>
+        )}
+      </main>
+      <footer className="flex flex-none items-center justify-between gap-3 px-[3%] pb-2 font-mono text-[10.5px] text-slate2/70">
+        <span className="flex flex-none items-center gap-1.5 text-slate1">
+          <button type="button" onClick={() => step(-1)} aria-label="Previous view" className="rounded border border-white/15 px-1.5 py-px hover:text-ink">◀</button>
+          <label htmlFor="view" className="text-slate2">view:</label>
+          <select id="view" value={view} onChange={(e) => setView(e.target.value)} className="rounded border border-cyan/50 bg-[#0a0d22] px-1 py-px text-ink [color-scheme:dark]">
+            {VIEWS.map(([g, v]) => <optgroup key={g} label={g}>{v.map(([id, name]) => <option key={id} value={id}>{g === 'Live' ? name : g + ' · ' + name}</option>)}</optgroup>)}
+          </select>
+          <button type="button" onClick={() => step(1)} aria-label="Next view" className="rounded border border-white/15 px-1.5 py-px hover:text-ink">▶</button>
+          <span className="text-slate2">{VIEW_IDS.indexOf(view) + 1} / {VIEW_IDS.length} · {label}</span>
+        </span>
+        <span className="flex flex-none items-center gap-1.5 whitespace-nowrap text-slate2">brain:
+          {[[1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6 · approved'], [0, 'old']].map(([v, name]) => (
+            <button key={v} type="button" aria-pressed={look === v} onClick={() => setLook(v)} className={`rounded border px-1.5 py-px hover:text-ink ${look === v ? 'border-cyan/60 text-ink' : 'border-white/15 text-slate1'}`}>{name}</button>
+          ))}
+          <span aria-hidden="true" className="mx-1">·</span>dock:
+          {[['v2', 'instrument'], ['v1', 'as approved']].map(([v, name]) => (
+            <button key={v} type="button" aria-pressed={skin === v} onClick={() => setSkin(v)} className={`rounded border px-1.5 py-px hover:text-ink ${skin === v ? 'border-cyan/60 text-ink' : 'border-white/15 text-slate1'}`}>{name}</button>
+          ))}
+          <span aria-hidden="true" className="mx-1">·</span>width:
+          {[[960, 'narrow'], [1080, 'medium'], [1500, 'full']].map(([w, name]) => (
+            <button key={w} type="button" aria-pressed={wide === w} onClick={() => setWide(w)} className={`rounded border px-1.5 py-px hover:text-ink ${wide === w ? 'border-cyan/60 text-ink' : 'border-white/15 text-slate1'}`}>{name}</button>
+          ))}
+          <span aria-hidden="true" className="mx-1">·</span>demo clock: <b className="font-medium text-slate1">{fmtClock(clock)}</b>
+          <button type="button" onClick={() => setClock((c) => Math.min(c + 30, 1380))} className="rounded border border-white/15 px-1.5 py-px text-slate1 hover:text-ink">+30 min</button>
+          <button type="button" onClick={() => setClock(1013)} className="rounded border border-white/15 px-1.5 py-px text-slate1 hover:text-ink">reset</button></span>
+      </footer>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+<script>window.BRAIN = "data:image/webp;base64,UklGRkqdAABXRUJQVlA4ID6dAAAQLQOdASqkBjMCPnk8mkoko6WiI3JpELAPCWlu+Cht0TVkPUsRsfORz5xlJaUr6HbhcYDMeT3w3lb+1d8P03bijzbebR5v2/rb1hkQPq//beljyL/ZeGvlS99fv35Fe4x/0/5/y+9fftV6nfzv8k/zf8N7R/6D/vf6Lxr+S//P/mvYI/Nv6V/yP7t7KP5/7K/53wzeF/5foHe8H4b9pvWE+4/8v+d9af3//Xf+D3Bf6f/iv/F7Sf8/xLPZPYK/q/+k/bD3d/9r9vvUJ9iewp/R/8Z16hYwXTTqIXj261CI+6crjqOG/eSsi2yVHUocN/D6o0m5w7nDuJKjhweyBE4uiBxCIm/QclsxlYJ0PqjrcpeBDfw+qNMq+G5zmUYnMAQMz+0dRw38PqjSEGNXzmWksFkY0EXC/yueaXYfYYsuHMmrh2q8zD0+bNPKobhuvG8G2eJPxSdOKSAnRKi2p7dUNs8G2eCSjBJFp4IdIZu2eWj7k4PHsGRkXLsstwA1Mmt5KchXwluLD6wDAOqHDcj0Ji63BKvCc13IRWBJagWSBlwPr3Kgz/228xshAPBRlMIJ2gWQM/hHoA3RYtRzRsq3Q94k5KPkF5KW39WNjLqXo/0GS5ZoC2wyagysr+WZwFmorD8p305bQDqZGs/NIoTNecrd0Ej7nOfrPHvfY049I8PqDhlFF+qLh6FSsbvWN3rEmGBcgMQVsKp9VXs9B7ttKk5mH8z7soEpmLzNgY5+ZF5KWsKVXRVxWe79r758xPMpG9JYF7h2JnFyl8jgFB7w8vPuonVqfRmECQx9axdUONV5llJvHaG26zFcAcsbscGEAv6ZSLSwATAt0pp1EBKkmeAsiMeuLKC3bAE4Y59nJg3Po1JrOXe1MI+jofbtmvY4vsixCG3806aAfRMp7w+pp/2ExMEvw1Zi1Sq1lGTL33rOkqkcmogoXuIXaBXVFeyEzyJOnFErVFKdKF7W7gmmhrn2m+gq4I1ny9OjAnRgTowJ0YE+fQUklF+6aysytk7wIVfhBdTFNBJY3esbvWO9+wksbvWTn1PTwX5DD2/okarQNuwZsi1X3W7foyM7XSUSeWthgTo8QgdenRgTowJ0YE6MCdGEJK/qz2qxrdoMiyxj/mvqYGLnZJg4g1tDqbY3esa4PE7r40187Ndq/o+yd3THVcB080t8sBH14L49ExJFxcYMfrt0UgwUqbWSt1943guvsw8KQNnuNiG+S88rzbG72n4AKYONGb0g5EH/MTAKJd7f3gDDDP68/pSZ/Yz1aAh7UHPqaQ+IPUUPAcZy23hhQkPBGtWn30JjtqzOqi+9/VCHX3o9KSIur98OnFJAp0BOjAnRgTowJ4CnR8BwMBWhzLMBDyZqO60++L8g7fqoTj/8L9Ez3OfBqqbgXS0/oN3MihmklakCiEzhLFTT2XZ+d81gglIP/4NtRRULSnNyl4iGlJTFnar8g8+QXQk6cSK5w9UaoURn2OvP3xYEDk+5jDkFunw7wzM8e74KPiQkIHHruavg/n3Ag4D5SXedajbCEljd6xJpICeEpMMFYhB0TzJhZHWka+ezPep0OKj53dZ5PEfrL7C3SgbinxhuBOHwgGjqGEZN8kV8Qgeg59Qc52ahm/v5Ik2XI0NS7pbsfl6StduubWraKSA3XBtng64mhqMFAyId5KSbXJBQQgrRcTx635qzjZ71eFZyW0FfTvCLkVgfAUM8JuwxHUs/G7VJATLmngKXrG71iTC2DbPD4Iy84Vg8P4ZdtdUtCng91xzRAyrf84LDTwMlCML7LB6sWuyVVZBVbZhaHCwDfrpsMCdF5jlfRn9zZ3OhdPTH7uKmlxWSPz//7bOOlCT4wXNtKRvqzwQSNBwXRWVN8OXNmFvnlGluttdU+02+83J+EsJqKajpAcrhq3IUCdHiB0C5bBsYKkZ7HCabTP8T5SVWDGmrBqhmXXqYMjSd7ztKeGNmSZ5aNJ2QThbrOhcPloKFcF47ygsQs4gLd6g70FOgJ0YE8BTowRnCVeMdUqMLrqhoK7UVUrsfCHOo3V+VqGgPhDOM53bo18l8cAmKTCh8lRcG8L0QMfNfRWMhGOMloJRaCYSM1HT6ON8lYisVQCFZEBLsC0ffjp+899A8qshiwlzo/zSv+W4V7+4fz26Us9W344K5F+xNQffvk13MVrRvxW2p+FJGYcRQpXtGHKsFHiz0d21HotWPpLIlQF11/Au8vk+qzYmQ29uS5Oq0XJPUWEPqD8YOfa/AqKaH2ZKPDe9kOIjoZ2w52N6JFo0QctR5Fu+RtQwJTCtNhXxYvmRIAibMcHP0FIi+jg1Dg26PJOnFJISYYEydUOltzv/XXaBWviMyLYsotlBSDMs6/B0o1N2lMrvgHpk203TrnZ6U2tQD326EfABRfw9cnF6LD0nCLXhPHJzpjidRIWhWewQTCPx83jQd4q3QH2jwoUrrqdhbMCSl3BTCO2PP/uWAegOFuAx7zNRcU527myreb6yT1Eiux+sIDtleh123VM7bYEVW4Z+gwkyABrdmfujpib2D5PqhOCV0rgkMrnxmqSLWleweDhyc5Tf6HabUoUAmcVih9OG4FPK7xt0cq1aOaMM0wsmr26INDqnLFxETvtArh05TqaOfPDjjppGH8OQogQV5ImEc+7ujAobBukWejW73O9fj/+nbvhY0Q3iwHOrJwMaBiG6B40ECWKIASkJpPK8vg+KQmkpudk3Mw9S4otNO2XXCrfs+imt/tMnVekzucQCwCmvNh/YvpqSJcdQ8Pl+krGqqrKWYpKb2Pw3gfV1obfvQvfrmxiQktAKGDjY/PyW2gjR+8QI941h/LS00meW/joywb/Y2jIFIzEgMv8MX+6GkGMGw5bCTA57gAdfKZsfQDabJl/oVhexlQl503e6KjsvmEGoAQLwQkdIprn2CPVLn5KAUTU0f2qGAtjEVdyyJOZ9YA58Rq92LfLU6MIZ4feANtqfx//IsIA9dwzFw/gXzjnUTSX8G/6cUJQp93losPcDfQ4pyumwxBhubLEbYLuQDR0MxTJCQLW8CWnEFvlv1afhvhYsHt/XGr8sTmgOMnr86UbrIcbMmlHBmxX8AB1dKm/XL0NBfBNac13NYBTUc8iAbjbJ6Y3gK5bAr45HmB4F0Qua+kVbSoKNWov5zLmxj+yFGDZqVc2Prnc8ZuIbgyqsmEs1xncFXO6XeCMhbyTnzruVQbTu6qUn0CCXxaYWpukG6rL39RS/cEff+6iDvFBS7Jd8cm78NFCTRFVvSMWJgJnOeXu8MSPdBtBzracLhvUFPOWZ667kTYYs2/u8PffBxjGSzmq0rxMvJvl3BB/4E9MT2biQwKKfmpJPfdQXlgCtMawC9Rdva5cl/YqWnKa8Ld/U1z5cm5FPbxU1BR2jZVyWrjkvz2DnRqTLSA5JgxExVqEIodplT/XSFhzTWDkFEwfMp+Xdlkh/6OwnH1J3w9/jaTz83TycUkU0b0EWTGbvWN3rHI0oKc1HZDsuZ1mf5ZNGQ7CBrim27IWdrbqtrhGzUnFLMse1xSzhNB3B3S6RKlTqs8KME+lzH/C5PfjKPKWNAT2s16+Q+7POot02vAYdUVgtK0KQxYjL9uabL5q/OTN9TPtlXbBdG/k/BDgv7Sk9AXc2FfcxMg2gNZKMTUdY4INcMqLxtfIv7vbmyUWNy6Ga5+i62VOiHb8FSaiK4znGmyYkyNeJkB64ty00KemZ75xb14hWTPAQp21BLRs789U5+3CJoGl4Yjq8b/gggvvscBSjHxeTOR3T0o09pMAzuMCm5tdDQQIau5SibNT32nUgSzmnwiZ11AIgSHeS7XIcL7+CttSW6sWBJTOXrFyIVLTNwKUqdZigwqezHa/4Rz6g/HCC0ashZkArP55qmggd0YPe5sYrWVahH/NNADM8k+F1p6GRvZ2DPhOM9CXSksCaDsAR/Fnnb8aMpmbMOZDPCOahQ5fwwQ8wMcsmmqyjSLE7PbSwxHNoEWL9njBoS7UreHpLnViZUWTcyEtVwAUxjSFfyvfGFJjOLrjGd69K5XdbL9RSxUoMhOjeMXDanuBS9Bq0+Y+JQ13eeQ0oMvIoDqXx60S0/X7TBfd7Zb5rMd06RxqQFj/74OGPpYEmQPmwJ57YjTea95hMwtkV5qCdfnr8uMEnmMr/eJuta/jTEzLR0qzmk6TMZfcVeE5YFIcqVh97xNhPgwisEBOjAnRptmp+XxDCPZ9rPrtXMRqFlpboqx4BfSO7+mfqSHWkY9uxkEFVe0pF3ZJdiRHS255QfNTCdWU5SqiSgQtUHjeTk3qRwESG2CWUN2KZj2FZoNpldJbcLOh8vC83tklhppwPRNk/K6kVXEHvfGMwAaO73zJRtOAZVPtWnzRnM0oiRtZVzSlqeVjCzgGboZRrDIeclXCOxoFTt0rs7phDtTf1wLt/j5JdxkjlCMpm74YFeanu6Ql3RaHb06tb6+Ysb3+NNIoqkKVOolPWjn1UDpJqTvEAcapn5G/HnmEhhaKOqGiB+fxdx+g0a1dWnaAnTqg+xEejN7W7G4pICdEuxpCVCsebqGb2gYwl2Bz6hEyaJ9aY/acm0aOn2tyfACz4DxUPBL6JFDOhh3OxgXV1OgWzDnXKobEEsUeADL1WkQbMjCGfA4JFGT+pK97l9siOt7JKjkEnoftczCnjS9NurhWzrcGVY3UeiiVQjmWnSQx8fgIOaSuTUHoQ1iUdg/SLTGIWAhgi1PSv2GqD3AjGMr2mp/+vGiZOaKFeOR82uq71q5xGUv+QdGke046pNlM0b0nOyDVckOD2RgzUFIlE8h7kogTQbkxtLXtHQrJ9hwZ1wBIuj26Ypyp3eB3HA6bA5Xz8FRJ/pl7tgiaOk+bHy57yFQKT+e6MZyyWLblzNuG5QhyfmuOg2svz2HlnwjOJsUBXkdoh+bCOC05VwoKIMODbpmbQKyQGimO9+wkqSFQoQiZrOnEHrG71jfLNrhVYy0AYbUViD/8K2q6uapOVxTWPIDP76NzNQ/Ezp95bKuzlTZx/o876s/OyRgFtnFJvy2H41/PN+9KZHm/MyZywDhVvvocASsRFaoYDlvogIcaNruHf49NnNVCSx7C0dFUO20d9alI2qN6ZwM8+XSKI9QaupKodobAXEUmNgc3PTmAdFjV6ZjJd8zzm/3hTAxjks88TLhgPsrhIVpNIg/9sWekCBcy8XF5mKVx2ZtliH8fdXV5GvrfkYvH/wzNkNVKB6jlqPqF/ujGQyBu97hF8V026JZzNHbZmCfBi6vb4ZfLr85w+9kpIE9IyN6Dn3khe1yDodTHFpwFYbXV4TcThvxvzwdAYcG2d0bEvnHnA12J3STCP2HtkixcVTyMY04RPpC6uNPNbe5GbmtnYkUZhnct6BrYRETcCmyAPAptaF8XZyGhZGIf1wLkfbnN2u2Kr2Ao7yynfs2lhgB/KwrMxJDw6GqznfJDJ2/LQb9xeEaqIP2+E6FkKVw6CB15g0SIyTPGVO4UK7u8szuxzer+Gq1hFShmpjmkD//GnN9PYyLQjUQEL7pf9WDKlj8YZWRDpPJ6JX0zcuhqw0/Hwn2Tu3KINVVP3FrLDp+jh4TLdExjpgk2zdWLBwIy5SolBaMuN8O92PGdNmsWiDqlVwDTvWD93ZSKVDDjJQ9l9zBXHSU8meZr7au2vCKl/BmwlDg1lbCTwePpe+5kcgH2V7ru7zPuQa6KxoPLs1oIhkSCKYg5EvGhOaK9AmJmCFF5IJ1Er+qYaHkeAhh/bjdtV1qkiZbCWaRngobmFSTC90JDAs8GxL0oOLPRTYU3c4fJm5rRRmZpnuZD7nrU/6EjwfpTfTkz0iYee7clLQxpH+rgfQsB5giBh0DGfP/SBFnyi6omqufzpSma/K/5T3sn2rVA0Gy3hkQvyXD377MHx1fX8ZBx5diFrK87uaOYh/yZ1w+8wCE809shiWhd8ZpFGpLL66Cv3GRvQc6OjZMVMhy/H+06MHDC91i86M+P56LqAheKtDXrSwo2h3oUvfxl+7YMNOgddqcgqYzK3GBBU5kp7onCtAVuidMUNx143ku8ZoXgHxhmZznfSSGjeyqCFqV3kQL57hjQWMVC+Wt3oUqMT8Gi9GjG/aEM4xnj/v8MNCFGH4njrIHoDdhVOBH94u0noq4WuK0L2AXew4Q934Tap3z94Ywprbm3TGu5LtBPM51n3k32V7es9x30YMCQ6jHC54QOpWpyq2zNfBbeM5mitB4QnO0+zG55ky50pvOjA3Vbd/HUoS87Z9Qc59vTEEblaiUljd6xu9Y3escFSzYVhOIMJANuJnBSCwdzURKK8UXesbvH7I1VjbjbH4I0Ei/AmYB6t8qwMl3mH4sM2n7wVw5P5g2KsnD4AhRIesXFkYpFE/AoMfHvc1kzX4Jo6/bmq0uyamsWypXsz9I36/T5DnxbTBHYDABBrbFmQ5HmK3ZubA7NQkE2BBvDXf/AzownA7XarGuqQ0vzMFNn4jeXph2gphIsE18+07X7TKlVT22Yw3F48a28ZnOhVvwZep77W5SXoguBV7dcHW/d5aHUpwnQLlvQc+m0LjI0qHrLpNhgTowJ0Rc7O7BUtoUNf2cP/2dDLKJ5KCMOgbLLopnE6jjIZ5xouYyTGxlGj3tMdgTLs5Bz9CW1BwadvQr7W/sZI9/HFa6GCwbn0Loc0tHSgS1qFxbys7kZuLxaeF6vDL11b+HDldN+qq5EsChDvsUWgMwF7ttBFQ09Jan4YGBlXRU1IMS+7JBQdY1uvHAOMHB+0EZDI0TB4brljLXXtKzQ4VkoLgMW6P1lUAwsqiWkIjfXEcIX9y3MwnSJkt69B7MXCM1KyFJnpKosJdyfHseRsDvnJxZg0VstOC4aOOIdgrvqnhLOlN50Ygxiip0gNI3ep77Q5+4BZ4Ns8G4wbZoZ1IFtewsm5GEsFaMJe3QtGgcOGoXAUTD3UErLUD+C2ZJCOLOwVLMweIZ0WwgoFJdF0aWNdBZdqC6EFVGWUpVkRmndsxZ14prExueNb9iuJFSVfIMx9kzsWu+7EyRPCpmNZ8U0Mi7no7fjpWfuyZIRgYYk0Q8D4rRzt35EB+QOMEOZ5dOiE/Qd4pxdLtrTmMeWKVDZjjHCDd5Idp8tVmwlDg2z6hbhdn1B3i7A52EmzYShXPEJ+FK/00X2a8dRZmP0vAeMaP0xU9asNjXurugZU6j/IBbqrv+qLrL4JCJ8fX3RBfKzOI0hZqPSaA35jStH5zk6AobBtb6oxv8WPwrEmkhAVPSnCdYoXQJkGEZb3HTz1LS9UydGBOjAnRgTLmEljd6xu9Y3zimHpD1ZzQqneSsYX1sgvpAA0WqvLZHHy8v70kncJYFVgiREd6l5OpLFANQFZcp2LA7uXH7IRsMMBlcLLbbSECJcKMTj2FtfJGOK7hC91bC0L3ELBigUNtGeQMTqiyY0Ki7pI02UGpLFCC8HQbWfX7mY0FOjAZGNhIgcUkBOjDCvsQtA0dSZQ4TODnIEiXoLnDK7DUJNANToCTDicV2iwYWrQunyWOAUU62MiWk082AQ+sd4G7t4fapAGUgQE9kb1PUGiccUZnlV7l+t/aSdpFBQKGUy6MNGlTrCxq0AgiiFN6npNi5c1E86iRWLqDj6mMw23j3FJATol2Bz7u6MCdHEugSbFmUtjvqic7yvVOcm8e32NaLBT7swGl0H10EOqGDbg8JXF9PzskJ3IiP3zqiJVwtDZ8rdG73YxEpOw5cIxDIQbyCTbQiksjPp6RBDai4g8qEMiTqW3fsJMzFRqRvC/Ap8O/0ZG9Bz6g59Qc7CTXU2Sxu9Y/GRQdHwOXFQ1NpTsJ9Xz0VIJJaqarsgZF8M486H93NmaRq/37LEq+oQFyrlBlfktd8U7uOK6L3+ZY6uKrBfSpLJsoNSRrocG2hyxApOGm8hE36x3vzPwNHm/zbWauFxEE4pICc0lLZ92VjYmI9QSIJx7iBKFfsMZRVkltGBTV/m+nXyXpOj0Y9ZfIZncAF0YonW9dWPn8UHy3WjEKoWTpC0ODbQ/T/pl6BU9KF0usiEqJWDVAT0XcLs+oOfUHRYOgSbzkmwlZAWYSS3aqHKhqS0gk8+Z7RjyNZfhfir187EK8Fg3CVMnpyTcCnNHRnhveUyBJsMFOfXlQ9Y3epvhPOLD/f1+CbGeTtDifULlcUiwUUJTKIsxhe2Nsqt2BOFyHlNiXe05TF46D0eGvQoVKV7X04o6hrTr5P3iBJpPBzxnmXCTooi3f/gscubpesci96c0Q2zwbZ3SRnImBOjxA70IvCgWqnu2tzAEgKSDtTBtng2z6lvmRZUNlnqf9vnvitSM3poqHxYv/k4Ns8G2d0kZu8hC3eoOfL6dAU8J5ntWLNf3xPagDOHGN3kDiiTozz/DImg5QGzMfkAzoQXAnoUtk31Or1FuA5RhFBGLC1EiQuNZRlEQBYeXrAdpnSyMXiSPI2pVACMUNsn1qdJJGiOtqqMyAmY04Tp0EPSVNWoAyNS5LG71k2SAZs7kXzxJrmM48AwXaOthKHmWBcgu8k2IdgXp0TMM78qkYyhSxuyTSeIMODbNaXu42fXWH04bDAZs4OMISbD0ZUoERNP4bfMUEbMTwlsG/HcufT9KnCcLSD8chwk4Ls6DsxYbEn9KuvWEnWQkgJ0YE6MCgYEkfYtEBNWVe4S0LwoAA/v1w0Dzhlbfq4brNUH+n1PL1YHjlcArJOAxT/Iw02zZBVFeVYDm99R05JeJHBRMCCnS1C5CZyDDACNhGioAh4ozUoQMcN1A0jD1e7k2dw3qIlCbtp6+f9BzqgLMzQ1C+xuMdis5K2TixIdkow6fenLksiPsRJXAMQyXWwDE3845Vn7f0G77qwRC7P4O4klFynWglPxRfIooDUQZnKcs/oL7oRmzn8Qn1WSO8JCtC2LiZ9GJp4mO48nub6Gq15Z+aR5QAN45BsM39MoliVwQ0fY8zv45VIK3zyzQvBBWz55E9/D99H23rvYVr1A57zp9NVzRhIYLcNSDj83Z9hu2THfNVCUW0hSFS64/ftbo+loeIkL5pb5NGeBwgkRRj162nPKNLDb0jwiDXnb8AYGR2qkv2j7MZIHXnbIyC6mS6ARhhrLXFV1yRf73xIHKUA4OBTmTVEabh3snvnD9p3lcqgrrplBac5FZJqeDXoJQQ2IESAxzb+qy/MCWwuYlww1wJq9ZAAB+pCePnmF+a7Et5GkCt/wgr53O4xzkQ3J+ah8MqB9m7Hvg5T7WTQmH9HGDU/80MuA0LE8m33hy4+dzYf5Wmd2WzqltJBOhnH5vhYCHXmKKB2b2kjtm3Orxu36WHW/vc8GRihNZZOlQ5CcI5Lnd1mOY3sUo210+lRlAxLs/WCPH6wqNjb9NGBx/tMMMPQiI4Pscv8zqp7f4Ck2Z+gibIx/BjIOMMqu89nnIl82A9Q2BikpTosieyzXAGkuOVQqL7ho25/eOmdCxCGb1+2vyxdVqOUiCOAm3tzx4ERBvJ3Winw38pv7LiE6ReBv6UXGSvVGMKEEAwmAuqqMhO2gyYrvV2qT8dc/VAP7X1H9n/gTZccs874hjROEyZg1dCRt/5l8doe3ewqjPWhw7tKj2qD+LumtfbXzJJm/87t4KS+xTm75HjZ4FrXNyoF7sbH+72aBa8XHlNy8832Pg7oWuBH8BBr/YmU1JBmVCyqmAS6bfo+RTI8aIEQ5aLspM+C/IR9HSNDlY099yaZWjtNtO8fObaYRnTb/PKIib+u3g4RFVyRzawP31qI/PLOD5dhOcPbEk78huOntVE76AfZmOgj/JmpZ3PBOndNy1Tb1kcLMS+dw1J5AytuUzf3k71MX5/lCcqRAIrNhAtFCTSnooxyPtGUoY4pdgvw7cUunuEdd01x8UyFqNr3OMBzX6OabXdYpC/lC6RsvgXa13hEYNVjDi7qhyAyBWs+7OZqlu78aqg5172m5RLvl2d6o9GF4VmYrb1dk4lse5pHnCZeefJ07EKbd7OdArxRRDC92zHk6PIqnhQROPSJb0z4Qn1kdXIR+8YpvIDSyPUVsGGLw6ppajul0pOuVSUe+gWVml2JAiPMdUbzDoGtjxtWQgCQ96JJAIs9N1XX/oaQbdecgEkqYDhdD2W0tMfFiDsuoGUgEQ6sHdvgnrhLNW6I2Sx6Mgtvm+HTZ7fF88d1eF4qPxkGQashbQJg7WTa5+b6/ee9s+aTGnJnjDn6fE1b8Mqgu5WLvWMWAKbtdC885CNz8HlGaiS/5YnozTiqSQA5ogVdGs5FfMBDnzMHy/tEZbxI+lOYt7kSt4hf1p55NOd2qhIaLtSu5/Hf4mmRCWOpFJOod0mG2LjGQh+UTUI7pN+vSbDA3cRTJhziNSIBpbWLhHaEPXHDjuTWKgoCxPbU9UxtIFuYA73vVDpwZMF/TUUaxLmCLu0dTGGpii7TjacAjYbDKHbMfPpZQQtA7hcYtNM3z8ICnDIK4w2+xTsfanvw3VTwziYUifSPk6KErvzqwtKLkRY6x8DUMq56pfV/aM6i6suYhlZmSm4KD4GQ2+slZiu9jhJG8vq2WFM27Paf22+yPKEgYZhjDuEqbI/CjtED3QOuxmMxq71/PP9i5ECT8AQEGjIMX81jGBtDAywt9QsTwJy9kIKBQDG+Of9izg2toRXKxdq8djiA2hks+sVFk8DqdUooAM072R04sOBlPuVYRPuT9HkPWRYWHEArf0xWyPOYtfh3CbUF/9T4gxZEv7faLA17OF0HiZkZQ/PXf1kc3XqQFUWzjCDI4sxHUACTAuyLg/Ct79VMgaDXzh68b46gPOyCtGUSlwwCAWsfRkKtH1XKhMqsomIehCYDaAt4cEJbmEfstn/KGgzu/Cz09zfjrFPF23Z5QE/8Hoep29OBDVwYbpthyPQpN6h4HMYosPTaqP7mKh0gnZjMZWjid8xobGC0lWvuTSbzxkITXjxxjbnezWll3nRp4LCjrWU4077j4IGMs+bwNfRtZsB3cW2SrFuh26Vtoe4JV7GsyTj98dAtnFggZ7cz0DWqZsPCUc17UVtox7oJUkZXYWg9GZFYF6wvCjzGJFR+Qis3tfw3fOc3Gcn848bjXyFnaCQTVESsfhFJdwguyUxfoUk3icRf8ttLwQqXZJ9Dix5E3d1Z+FohwNZK18QDaE6EW/VXaQV9V5VbSwIiNw9vW/Wib+YpPpUUDqZe0ewJ1aGgQSshJUN+ucJNQrno6RfAoI6BZCN6luXpCNrCSDE1JdJF6Pr/BB5vCz/gpckky7bB8QrBkdi8nZRHTQjHs0bgKLfvac//0US+RcerZa+oVEilUJpgVsjBJtFb39eZRt/dryztb7VTDZYHnJ7IHf5vtGi7/CCihf1fMfWsTAry+BAWg1x2GDL4Ll5ke6gGNkO/5W8UAdvgeoNcoqMg1RBYdNPjl9xsMkCXD8cGVxdHrHmKChl3snR5/VQInmhZzEE6OxoArRoCA0KcwCTvuF9wd8LbVT+pB+IL/V3QyqHxUwMRZpvvv1RVDTYZgYNHuuO0rsGFOn18CKtkxHZYz38KYntoNquY4NFRzrcZs5LriOpTq/2mrdREf6dw55+YFFzt/lJrIy98slIuT6Wyrk6HkIs8O9q/99LE99jo1DfLaPEFtU9J/GJWCDmb3kqXpiHPuksxoO3rscFUqJl5kfWW6Je1t3IHoRyowKqYE4fDOQ4HVXuJ/IHr0cfH04jngphYHZnW8FHQ1/Xt2yhJxCnLayDdtRSV5UXaC9xmdnnAM4rNbb90Eft5Uuqzqy8vdyPhl5XptWVYTgdrzv3/fOCE58Lx8jeCv1T5caHJsXHdYCxYNLe1E2QzfiY+ucSAchfd0/DPXckExmAh7Rvn1dTliPTnDiTeul06pzchxGDLxn/uJBPh13HVWimCyGGBz3i0323YDxDWhsOZu2Oc+hifjN5Zg9CZrsR+ASQ1c2uHBU8oNPx3dzQC5RjphEAdnE3XBpTBaTyP8n4ntjFqO6mT3DDb77/l7U/wOXlxQd++u/tpuBNSrnHIapC285N7v1pxhMd2pN6Or760JFBi3j5RE0vMSBYqTFqps+Y0eM7/QTRqVU5MaqdQTFvWa55gdfjE7T7ySndK8yoM6TG3nunAR7rPbxqHuwTrMYVUP5M9ai4Ae0xkYQlty8/cdSEgFH8VmzOpV0cFm2nfaib5LUj/LPq9C8oWb0/1EcVuIGnX9edvnFyBLp0aE/U2lJySAW0qDkz9DYo3JNSALa+LEyvE7pMfKQzslJ9Kb2aCZ4ApEj2RJKR7tKNyE7NfMU0IdfgiFkJCABeSDpNCJmKEfvC1lpMsf78hDF9yrrYd3uWGzh/rEUYGEIdrklbYhAbcLVHUGcRODWSP7muedw7YupggAke4Q07mRtn4qfZkV352V+AO+1EUsNY0e3zD/dSrmc6ZMFRJcreTAZOAAABc2Ys1xabhlaIjN+lJOUEJFuFPC+ECAX1VRjv/qXdzOOaHxrkPEtLzTPtfjE1b2PTlemj3eBanYXON5DKBAQek5gg8mge8Skl4gAAJlzQIbIbGUrlR8dNhUuwZ8OHpz+vgD1Qh4SntWS6fcZUrLb/My3k3a6dNlK1Inq3W71bANT5behvxLSNF4xgqNZ5Vkjnq+PJWY2jRsiYo8fUd2Q+KA3mJeCtZKgSCqcXJLz+kQpMG5BsZPbA0JIxamwd75EFdVd8R56xJY+5S7JOkNurw+0YcMRpSRNQ9E+G5qL6lJkVPWttSf3UhSBT0QJ0Mktf9lCCt4Zo2XZIt48KxwFUblkZYYGcT/aIEmssRzJhLAYtVJLqTM9IN4gUj+8YxSZLEhNSgUUQsS3d9bOzzyvwbnT2hiGHNvUkr6/lc4EXv3yxnVU3oVZXuUyHyN5xKmKjVv+ybo0pPCr0nGJFGLPZ65F8pgwz7IoXRoLAy3fQvsN9M2CiWNOsmB715+xbkby41yQbnee3t5wgAtzRcDso8jV6d9ruxNKLGDqZ69gJGCOtgULAWN5NZZN/jFtUmUcW35HzU7gwTUxm9CDPCT/fwYGRDN9n2JrQQq8dAmqeVuqva1gtSvrRDRt5nVu8K9ziCy7h/p6v3iXs3ro8Col4nCLLZ6efniJ0MyHWGrewqujI2cjJtyvg0UYqnuPv/BnhDmgmguaF+eO9HOTXSqh6kZJt7t1lt+Ew/YjYIm33xFbhE6FDNZTsMF3tBNtjK9VH0wG5o05OsiOq0iMjsiXWsHywItIDmbr/ut1lsyk3bjRoIeWCeCG24T0aSC7Ab0S9uMS9dN1tdxUg2ZqCX/qHVe8bVmk63pHgc+sjToTS/dHOJmB9RR5JiJ2xilcn8+Lg3bLJgjyk7u602C+5RVJKWsVoKTYTWsa8ToZzSatBq3hr2vWtu1jesYA8JD/6XIHPHXnUL3+Luf0GemYA/vpIlsBEkVuLNLlNtWnS2x00BuuYPGG3wKLTZImqr8FygAvJ/Uy/AtToybkGMRfyVkpoh/+29qwCoe3zsSsI32dn8hCgGYxXUMR8K1+uyE51jqmmDGRZYbRJ7R0RKGL2ja/Ltq92z+6Z3yoDe6O2NHz6fprwDXqtIgNJNGPhgnXzccQFmtjqk9JZVmXAZMxhdLpsB+MgjgEnbVgqcm8oZjl1DRhjpEe12q9QchnDMJV0/Gb5okxGjSmSoVHC9BhdtLcuMFzbd8Pq3PYrQK7V2FaoKUhyjor7l7+sGIQT3FCUhVmn39AN9CtjuVhDmojXIpLnhSwgnB0wxGJdluhBjtOCL9sfKnTKmr4hY8ejV5OpeUukrfC526lj2pCTrf1awPtNDsZHZiiVuUq1aq/DYZ2ul96EXdLIwDa5P56IJmdnPpzr+j49uwk43XCNmGeK4gMmp9l7TP0UhnPH+AGMhWKA70nxj73JIGhf1Smd0TDIB9UHZ9+zc2iUpHGJvobjGmdhhlgviXsQFs//kSTbm+gRoFgtjBmoG0wqq5bdLqkCmPc0uSae12rKyLWpL+goot68QVNmvudiTl/ZgxlqFsXHohjWjMAJrMLIorAo/GmmzW5LRcHOwotUkRShkbuSuhMlxFD0x1kYjzMnZ8uWjn39eDi0N2zB4eBIo0pdtX468/Uzj8BWXFy0SpEDXVqhrrfuTbCl2d314KurwEvdh0RieU+8/5lO9ZT6lmUsmEbdaLV9aYf1k+FpA9vOUQAitVmadp9oM7/B0GdlaGHPcW+v1+tm5NxEA4GbL5FrwCrarXbX9ZN346UMdijtAGaiRXE4NBCPDj2gPB6B+xTOTXM+65qqZT17cMeYG3hz9b5Ou2jCaIL6kMa+wzKU2KCh0oD38a6xkQLYLE18rhRsmyPqNfKt4m31rqdrClAgHecIrBABaynCPdVRMfeqFJ/So06B96Gc6lyv+kHiCV3/ijlGVa4ynnaFGPg2V+JJRO3zuoJ8nzf8QWElEP2fuEK2H3pRNhTDY2nFTMI+eihayr1fUlBOXhDHumCbn4BVsXDih1J+tIw8ew8baVQjL/J4wui9aSpinG3rsJwGZBGpFaLehOh8c9Lmw0oWPK9Nk/hNtUpJsSrkMVZO1Cy3uHUblYTbtZmDrzoRWgAAAAAImBHAcjISuSsjqU9JwylIYQ+LfizR2EczraArg1LSjcpwrwkMw4IVKclh0PxbTIDo31VPD1z+D2FNdkd9hdBjTuWELzfj+Si58eoU8BjyrgTX1ghyLleOWA0qI8eLnHE/lopPeHp4mmGd2A8jLM9TajK7XHfJqF0Dq1vWgshK4XQCooGR679Xwp/56I1X1xTTLN4ogymcD6cuMnJtijxvt8gkphAaIrN7QZGoUYpzC+PDD67z1V8aIcVd4LoigE+212A4L0bWdWLLRLEBhXyuK4jEP34tMSUtqTZg8eU/Nmaho/azg+e5+4uu1o/cnObREd3mpI4SyiQzEw8q3NPhwQcEpz4/aHxPBq6kfxX5asZyHZbjyYpGW26KJu6Q5jn4tkYGVdZQ/va5YFCEG36socbESipK23mMPCRIbPydqUamjtASCkSO1y/6wPMIvOMfrmtrs7OZ823juSiZBUiLKrcUAgBZaxujm/nmUvVBIOJeYX/xqrgz9HUDlFl6k/nurF/T/mBWElCV4wwSkMbs9Ps6HKWuQvmnXAjn4D6OW+85PpeALl6VKNBzn2FnAdyn062HOwcSDVFccon+HDCxtgHripidxqL8i2+zv9MNiUrNER9cfRENd04kCagW4g23dVUuGy59Df1N0DQoNZ2sB/VV6xRpwTlKNE3Oi7HBLmPFZmk5XXMV7Cq2V3buH6mqDEvWmEEHscVS0FykZ4s9EOk+Wjz8uOCbZNysbXZfe0GKYJDYxLE68AAAMnBOMKOfxWXYP9eQ4MQOt3zfq6Xw4VuEM7vJj0PtjDd76HOz2bGBAAE2HGV6wwoRoXxRqKu9eM7+UegEba6I3BhTws1BnzDt7ujuST29zUVsgBzFonLmn6ZnyMs6EuumwODFiEue0gEJEWxNr4nIIqsyewyn+OVdUWAJ2I6R9eUTN4cNmqBIzXnd4wi1LHwqGY54vLWDmFBPbo7cm3LWDZGA+xPDKNQ52j7dVfaQglqr1Kq+BhJWC1YRLTuy4dYo/6FwlN1dMo3p4LNll+32pOkqfrSBusU3fOoI8kQ8SEST3EAK2Lsj5tUJnpyMgDzKXbFUu7T3Mn6v7vZP02f7IS09qI/MbFz7iYbjAVz6R6nlS3tFpl/dMJ9lBEeuZ0j39EKNQNkXY5+tDJGKqWCMx1dRKnUEUasDwGsGW4za5dNqDD7WxD72K8AwpbxdyuCEcobK12YRO6lpWIg3akGL8KBB1q7dhkSzbdZg3DkXlumbza282IFV1SzGDThy/U8cqABoKC1MnPxg8egZ1tq7GQv09dkoTMEXjfmCuSwvJJIZOJp/7EcsFi3H3tqi1Eh3IKFQ2Kkx0I7PWb6o2as2iO7G5Hi8xuPzANzuGUAzX4WnDtkQrpUkRCnkhUecMW3MlBhA9eSK3yP0nO3abn3JARJ/8DtFX9tZSTiprTVWTz/nKiVHgomXHtLWH3+4HQjtHuIJrtMpPw0vMLK+uiGDXaWa5R7cxLnk0VQe+tmYxzGjCiKkmIAqMfZORc2fTsHiCLT5J0/aLBmGHy//iBMQ3qSL1twdRHfbK3m4CGGI48LWCPgPleYN2vpAQq5eZT6y7xlKO1ia0mT44g3lEvXZeh6sEyYeHNBoLdUZ4OTVGt0vWBWw6Efm3R0iRCAjhSwe4DTkqn0ZUmknZheQ66UXOXqj1tOqo0E7+JzA8GmDyZNZLAQ1KQD4K9RLvzGzeStOjWFHO21nSMLzT3Omx1ZzXZi5DgzXyNDvAQV4mwatj0HuCidu3flMh2xZRh16dKjvIaeDu+HqJKRbs9ge3gT+RR6BBaLAhKLiZR+TLhXvome6iernaj0Yljv4BKqX5TfXTeRRB0LIYsv9lmP+m2VOHh36X1KCoeC30h+BAu6SMDH97OcgKAsiaZ5sdbj8AQ2Domw33pc/VmY5SUX1X0KAXLA3716zKAxdGmJvpqz+5mQtOirZ6i7nYQ3wb1ClpOnNte49XB0ag/ojVSdFlLvmZ8hSnIq9XPRVvNDoKUavhI1GspkNJFJUePy6wJjesdo+qf5sqhngxdk9xVXgyqp7mhsz92mM2POX7xq7x9YcLnPlcR/Zmhq035rcYc6+/B9+Awgn+9u8yFB8Nta19+XLDzuLdTwgisP1jTAOE9SMvsXpCqfXkZTm05FW1wJ43jj8EAWvA2Vi8sOuCReh9pQkAJojkQ6I9pGhouOcVQw8Bo+ryLirjYoZnN+8ZplwKFwLWE+TVJGSHlw88iXVS7xEfNfX9HtmiDFY+fFO23uwOhOhjOiJW2a3RtFN3KC8ZC3mIv0j+X1P9lgTk4s4sAsg9rud3AdV6ko/Q2GuWV89zKR5C5SUjJ7lPMzu7j8GCOkryHxuGbsmgQANNeFAqM63ixY3lRJBqeLI74DbEqh3PwtW/TY+cB0HLB/3nkcK2pONc+hOfi6ZMcR3a48AfAk1KoOK/OMaYhKqvxMQW8o9YodM1NE9DrnI4hOsbMep1Uw1bgThM42COFnBSaa15k7I1MemvaawL9QK/oqHxmEobGBNUpDlgkj9jV/1sB368aIzsb7sxLiSsaFkHbNezhAOV29bidJ04agtcGEVlKkQ0DdqjH0WyMjN0otK5jpkp5j3oI6BHpJ4WmSeVL6w8sdpcuzEk7mIrW7gUfmYoD2lKSleIGMZT3CZ5BUUwakiRtswl9Lw+JTVtUwArfgwLP6BA7FiJKP+KK2dUkT1Dx/Bi+sxMOdidA1AQjNKGq4dqMGwIn07IC6yuPnWwuMm+KmcULiYCfXTW4t98PLJ3JBcLx29t226nMcWRsZ2V9jBz/IqxaW+1ctPADQBsNlCIrlDmCIwqzjGvvKXZPbv874rtebS2ygQBDDfPKKpVIj5+GWjejIioxw/uLnPtTN96gpzmdGmx5seyRI8rqkJSqZaPMDp1RvLs70r5/xVUsUMD82Nk89iQpQFFLzvZogFjZF/ktaHU6H1Hunq6FnnpY3ge3lAsp8uuis4fDRXls6v8Il53lr2aHQaIE7KBXhEP8nKoW32ifT/G+CYoSPBVwuzWrF0FR5Aj1uUgng+OZrvh/EKXatd6ulm0eGUIp9BqDEHISYr90iBqSDNyxyOXRLxKc6i5kJaYBTt317MO81ak5z3wn/W8dZ2uX5zvGaiVgXN+N+pI1MxQ3Yw4MReHyuogwNzvR99Oexc6snrTtM624bRB/xSbEY4e9w4qG5xHOoeYhSVMaoZZpCPHyZ3AcXpWCjHX/ijkf7QXL6T+aIXjBB69UfeYeQ8Xf+Q57hBuMub7GtL/s2N3AkSiyfjdSIg6o5QadgRAOsrrpn+H9TfFiglYUlhdLIk2nV/77HCG/RWgCTgEcJPu1ZL9a8kSnfm6yeQZ7YaP9b0yN5aY6HqmqR+0pAezhCSup/eiq8E7qp5J9IG1e0OWgE9t9b240sIvs3CQwafoCzbkmPCYHFsjvOJytDFuPvj7fndv2nZBI71q8/tcfyAelt/nif97WOg2jyTHur2lrsUmWus3O+zGmDtFxUx7qvsxE8ury5Gk6rB3MOBV4TUKFo4M/lpRNn07GsxHjlEfmtIOrzscsGHS5JKi8DnRORVPyXJJw6XGgjtuHHy7YWCaRB848ZhtCoefUcY0oCaZ2kfEFG1uNof9qaFtAymSQa6eRkVdu/qYJsV4FCUgcJ6t+J3U0ndWgbtLNxas6ZzhI48r4kyez7LRdsdOC2t/MR6HAu4CBewWws/CbpGzZ057ysIDpqh7LvIoW3XZJln6ODSVYf8Pm40moBrD6DysV/o6fOJqcIIcbHBe9hgF0jogogJ3+mN3UFtJoMuWg15p+mpLh79JpHcMacJiBEEL9OWXua+IE+zWjkRBmNy2bhmgKvuxWjXB/XjJ0yff/TghiPfbi0Y73jfXKi9EFck48HBWwiBtRaJhO7LP8taMHNKWvrZxOyDg2Rbq6N2xoVnqtBh3/Zn24Y7pRRcq+/x+HgttFb1NwA1Yl8vX/VfXd2L5RkZ3oKbygjiKuls2aYdmLI7dbTlME5Cf+qlsJLTv4W8qEYeYUz24sfRlJ1L215ICRavmvKjHq8sJ3u2rNJDL1i/7DzCvY6F6XH1iSy6MYJyq/mFIbKylmXE/h65T+RG868OzkWnLcAlXS2ew7sprTK2mgIbw79GFmwfIA7sSHExBzpGKmEfTREyooNkksc9/0J/3HBoFHRyo77D1x+Ll6oawKyUO/8nJM8R3lgSHA7LFMIp6K/kuGjW+JvhwlZwN3vWTG3OzckRZvcXt0SUr/9jhFdDHzYgs/u/xc3Ri2hGN5UN0GXVslYv5UDEi6udNS1ETCHxP6ytIczWWCBEH0GyuKuUPKIMz0u+lMLY+U4bCdHkBIwDs7i/FXLktsM9rlD0BcfMRm0vtMNrQ2o52b+WXhV/uA+OB3cOEv53kE32ld0keVlfQZfZ9Q+hiFALOsdm2ygQGOy7uUXxlyAA52mXXjTL7bTRNsQqanv13QIqlkThzcpew6VMfC72xSB4kgGIYpZymPmKDlpWTrvU0llHY5nOHbkQF1JGyQs0Sk0D6rqJNpyJacr2kV5IVH1QhtDQAcx5cDVTyRQ6gr0fx/rRutdMR2mcI1XySGJk0uXL2NOHRQFkMYBXwj1FpT9m2eJ73MOvfLlEWo/BvhPshG77xj9M78pmDBlDH/WkhHLy+m3nlgl4codHOscz4RlYwAZKQoBiHEE2AT4CGti8kleXlgBQB/hgeTNsa5fI25dagjlKKZw0qjB7HNQOFVbBHgEGkQv1uW5hmSQISqLgPg5feC0nKNQftNsLkGly7h2noH+9namurC6boZcpuQO5JLdofQJ58C76t62kxYsgDJfJ6AlmUBIyLf+T4z9SOQnGXCbXrJUCr3g8R4mF0xOOBLB2YQHQ7uGxzyHfnte1qB2+vYnSCWbBjcjCcK9/yyGozQ6UQ9CliBJdlRnTEXB4P3ZrZREs+4GYpIEgEbNe1CdUg2eiED6CH2sL+UcsW0fyvS3WNwV2rqqhcP9/GpsvVmxi75BPkHINcZnBUWYPrf4C3QNoyNvCZPF5Z7T9GhzCOYFBefoZOI7q0TTl1+9RK2nnfuqW/D76fd8HGXCLw6bcAC2qXm3UFlrFS6z3jXQhaN7J0E6R4qPaos6K/nBQQlv6xEhrzJwKDnzqYtEa6QGmt4rAOAYT256JZ4G91cdOSkgAJI+bdODcEV3U+Tofv7GZE3Faqt0R43VMxw5CBB+RH2prj8+0oUd4arbnY/QQj9WCqdbop5qenUVhf0511B9+WctkbxsntD51GCqelFUtIo3o1MxTvYavdj9eXtgUlYddFbPIxC67QPx7P6lORvepCNslJIG4rvkii0hAj3J5CTQSBM/Rj845d0t7RMg9NjeiK1Fqo2DZiAlCFxGVjBNPRSDPBkAa7rCD23J4uJxEK3ucPKNe4wgbIjQaeyYv4nhnUP/df3zqa9juQCRhJkZJ6Uus4lgv+VybaWNXqv8R9hVYyvWRQuQpuwM8hRkT5CDieRuVUsLh2LzuByvST82GX9vuIOp2nsVYTsgKK706m8EZXu9pAyP7NaJx8P5XhbC/Og9eCA2902AILhPHKK5mujRzk9ra/RxyjQkikSvsRN1qFNh2m72BoWSNXqXgbZPBefXxSvPLeNwShBNt8es7CLD49BilD5DmlNAHp9U0ARmNu0HW2+08pJz3qXJAaUBLae7KT3ULr2aXfJY98y+YsTe5ssDDI8T6dIhMakILyszl/Q3PowvSnqWHgBV6j5qPqUVXBqs5kJLCzsYwojT2d1xaroq4yeMvI7XHpvyhh7E8uHEx/4ScFcG14zQ+tt8azs24/Zgf/dhP5WaZmRwH76mD3PTkywNcdeLhINSXbbJnpCGd6tIcn4VJHYK9CAdd4j/ucVRCDCBjEZ69BXA56LqoTlX34/OxZSH74DKwngEnYHyVouggR3jTncB8l2X58fImdOODZDBrhOG2rbOSPSJD9zcEIwnS9/dLdwWGz7h3MtVVo3NM5hzScL1vHpd+ZKWgKzI2IRozPE3arN3mJW3EmUF/FSC1laEXij4K5a+U4ZALvOPo9W7evVbemIPoJQBV2f5vMVPZCqlJU6Fa7poniGRRL2s1WmYY2cBhBahoSWlqDx9vu2kIJ23Bp/44Th990sfzhK83pg3p3UQrTyyXmwLyVA1SZeVsK4VJZyR+HJQGdKs+TCobfBquAYg9y887v31oq9yXlyZjliYdSsbzPHtBLzGocxBHBgtRYF7EqFlSTGrIzLItCUU9CLvLQPm1HvYF7o6bWqidm8A3anilqj/h6ChMXSzGinStHVbTLmB6AOpsWBaCLUcdy2DeVeUnh/bb9Q8cv9Q7Ypmpriv8brzUBKWnYDcaZSINuyAAsyeKECiF8l3/qbW8zZ1kZy34sWNHhSfYUbDkgiCCEt4zAObVwHTJr/AKaIpX5rKkRYsoqZvzP8KU9emfxp7ZQLmAxxxy5YbbKYk5kemKVnvYf9wF+rwKG6s1Hg7fzTPVPlvDC/XFHA6ZKUvlLRqF69xU5rPoPAgQlLxsw6h/e8LLdkXpWLThdGjKolhf8vaTEcMcTFRHLNZ/nMGTGqOAnjyVNua9bK7rfEDvlt24LPgwMJAqd5usDV1pdjm4WOzEj/oRcvvMqRriJmCTlL84uvVJ7lhu7yv8e/xMD7pjR1YvAnNPJVG0RySxiYi/XtdpTkPg8Q00U/nA0P+6BEtXk22A3ncTrx+DYCaRgX3xT3Lb/E4o8Oymd3JfELZks8xIGut/rZDCSDa+UsQFBdQA5NNoZGD7kOTdEIK3tOuHLnWHzc/9Oo/e88j+1OOQKd3XuGocDBUMKZND5fcVha41x5W1R79JD9k2ltVD9FVFc1FJiTownTuibxB1//+IEfsbH5wNM8qFd8cvb9n1hey4/G2i+Bj47XYWPGiH2zFL+vm0yd/onUyCepiLuwzqY7l+pysTf23U7FDYLKwXRnPH4O99AT0gJnBxYJTTZ5lxHxXezdnlPS/6CgIgZunjUgZ7z6HwDPjF+T/EgGNs/rH9GhY/PPA+6AUaOV7Hs+bUXTfa5EIEhyEUf7/YOUUG0enyeCBCPgXRwHeSlAJUl/g3Sd9OqAXCBnUm1dqYwQo7UlYDRQp9hRhJ8NUind38nTiR7iqLRvlRLS35Zhdju87NFE3E6uwEDd4h1gx9psJmSFmlVeTVMuh/Io1KpWKPrKu3AhwdIYdwPTfY7pLKwtYUgR0HhDoaNE3RjIdeZyl/EnP6vZ/fKSi85BrfM2uvCpw8lAe7cC861BRkLqQfdz7mxva4JnpglV5nLNy25U+pxce051WKYLevM35aymSPwbhPnNrbhQErQlU60yU5j2uVWptwug52oYajMjnZAz+T7LmImnLhOvfCn6+FhjjJ+I8JFke3FOI4UUhg6Ovje0TsRyK33VE/DYZGmm3FK7x3tSiSgEhdgcbFYBforplPug9b2PQxna/t7xh+udhzr7lhU8QePsTzBWtF1tPJPFEwFZi8XTU2EP+IlwyPFYgjX89AK2xI01DB7aA5m11v8/EQaWIsyGmw63EU8eWHPnK4P8IWMeJO6+MY4KDcgLAWvP3DQR11DEY+LVJzKv3SHWzQWKLBmrXqHjSkX0inYvqn9I1lxl71f41R//ys5fGPOzwAf1CgyBRs76/jef5FeIMyV9FD6GK3a2vildljbKbLjoxBQt/OiXpRsOivFTEvdwkKjC7adhKxo5Kf1TpHyRHDaAd90Gkl2Xn9Y36lgXG5Nh8u28J/sf8odtid46J0AVnEss+nvC9sJsMd6JMi9pvkoGyReO/bIIPVqmUzxFZP/Pwle+JC0hm1aNw7Jo7uxXJE2UuiqCtXUx/DeQ54eSRkC4iMaFQxK59/W2rIlERLDalXckBcx1T86+of2zDKhAF2LI05DMTJh9izvwkrHQaDA4rfKETVKjamhriKdsLiDZGWBAEgCrW4F7Cd99Mi9VdiWHj9Y7QOqWI9qSUVExo0Kq3VmPCI2TBS8iQc5OinNbhVqrpHNAkNnzGvHAFnKemHGTbpkoycdfVraHvvRs15LPQAgO2V3etU9aob8mS4HHc8hxMQjcdAHpaQrwGTgj5EnthdvRVQfaysi3KiCYJcKSDTwlYqyyGDnu0ICMF1S1xceO4nZTAIzBtZx4FrJJEEgcgf7GvkTcF2XOalnwUn441oPz02juoacfKhNp5zvOGqPxG+YpAU4CIXEzkvbLEGcJSFjTUtla2t2VFPha1jva1MN+tTc+X/WurJBlTPsKK/jjMj+Lpr2xcVdsNoeaSgJye/VvakunEv4rAzKmyhy1A7Kpw1yJnOEhzjPukcSDEXb+2WDPZMDcd0QRWtPyu2coya7wvrESjk1pVGwzAZY8/tBHI4dUC6IeOEd+SilqVtbBsokpF68s+pj0R39BfL1G1yj1RsearawTaHFDObhI17uW4aivpO8XuWDy7twu+1PiHKmYgU/Mb5jkisvcpU6Vk613nxKP22c7CVs0x8NgPHjowwSUWyyvsd7jz50Cfr7kh+PWX9e3HgF/S01TdGyq3S9zrCQWvm8tLVT9BtR1R3Rhu0nwcYb6gKAnH0Giqx6E/hNUOP52zXwrhXma2Pf6ZsglpAb4GxCp/0zwU37yhIdfnrv7U0lYVlznB1Ib8v8uQb0XoN9oXjdyarFklfDW/GD0h0/uRl9rtLOCg19stSXhH5PfPUo1tmfzGVo6lPdBNpaQD3VT5yjSTljYT8G1JVc6z/13uPsoBT8DULoR1J1QlFFSqpTOI7jkW4VHGioFFIxupQU0Bbn9W5RCJGtmBKFp3HguhUqKYumxv1aFpjnjQlkGpx3RjH74oikLus/zSOl0cBcsONQqbgRdVd6pAMwyHqb9jNN+jqNkJ394yz3uc5uaRKQJCVCjOv0OR/uA1MZf77CzN0xSJCSzPD4oZFyDWwAqlCN221fRlRfe0rvbh9jLgOTgdzNLwjiN2ecMMP0EaVUXaWD1B0S9S8qLB00/0pTrUY1EXeAY3IaLolRGwiQlm8Jxuhnjy3SWCOvSid0T2F4YZZwrIh6RxFq48EuM02VjE31UT415rWt692NQb8lK5UE1rdHI0MikVgSevk5F2QKmYcgP6m9z0ezi9nRMTa+tNooO5Xe5EsqtKdi91vRMqlg2LumIBYlsRmZM08QYNE8Ibuo0IZJ6urtdapcWprz3KkDmyvdOQZNd4rYA+kUaQ2MMurZ+Xm4GjLEzOY43ELeTqjPAGkREU380/EgX26SySpzot3R4i1Kg+6LFB+cQ+syGuNSLPd8b/AXbl2Nc+XIeHi1yWQgEXoyufeGbzeQcctydFdibsR69kBWfebeFE7MV0cNJp/MsjJ29lgJ34Q7D9rIcxp1TyxkFEL12tHWU5gYM0VT7UnpMwWqxxbojLSDY10CvuJ+8s7SM4qize4CgMkEz02QfTQKjbwJQxFGpoew9ddPP4lWSf4ZGLBqQ/lRhTw9Wdf003CUOjJGUO4A8+0wH6gPB1kW4v39nDbZ2IFXw5IA1XaDe/SXdCc4ejtr7glNTfxdUy8CxjHDVfd+TGdcB17cvIoD1vhpCLvODM70ebOgXCK+ZBmcZZzRqawY7A/NoBsMT3EDq1YJz/HoCTw7ErJuKPMhZuVNCEmaXnCiJjtqc2KeZoiCfeRT3UJrwJMt1CvMkBvWQccAVala3HdsEPD4qt7oWQnbEIZgMvwWHRtXygNRGIq2bVFSlzyIChcU2hV/RnR6XR98aQ+/Pb/dlb/5yMwCY53U/8zm/BNrfCerjvYEll0y6DvWISE/g/D0ni2ZHX+fyQXeITxupS76BOybWrfp7aG5TamJ5pdG+cleQDQikeaZldHE5byrh+p8gXmDqeAllwtf05nlWulBrtdJrRRCUubUJIMPkXN3JRsR8s+0fD3op9WfA6Tosr1xWM5+dz/c/kxy9P6n1wlIvTOv3A+LS9V7SZvUjokZ9U91kRAk77SQSUUfzmyxnqrogQSFDXo9dcOzOp5oJqge1ZfE1XLSkZzDcCFItuGn8+D6cYXjZRZW1kIODRcecFNjZCGCtByKdsc5LyZ+GWwE7KoTcSmndbMccUOeZHshd/ABnQFkpXmuzLHjnwjo3evxhTSyh2S4xy/oJKJ7L7uoDhTNx8D/7cUQ08sS4i+pXu2S8aP/n2/tqAFToBCRGE5emR8B+BvIDsirAxU4+/dF/LswZKGuuR7sJ+QdoS98nD0LlUN4h21XAwI7yrumnIetmdq1ibgJ80F1ysYJ+uHqxXvSPwUPsWjN6Czg1PrQ9iKrzX32jjnF5BbYyTAfGOYSk+zR3IHs5AyLD75pabbN/OGv7Exdrj6XzDmn8llD5AnvdjsvPyUqcqjFO+NRoNyOqJb+WUztmNjkw1MwE0AJ8+dp0S+63AY0lvGPbjc2BGwqvifXUGD5pY9PeYV6GZw9iecCm++9EFT5B58tQ3Bk2iGpnkVtBphjqzFFsLxvFCcSs0fTH4UpTiaC4ZUKS/5fxqlaktSRBNVJqu0tS+g7+wXE7Yrh29zll6Dv4OQ1dob5kHSAPHbEZL5+G35cyYAtUw/PIzx5mWhpWFo9vxOZKbuDGgxgrjLADBgIp+ip71xOXISqVPO3lwzNmR6ZCr0d/N7YqUmdxxHyp5LNUcyd6k0U39LhOOm8RVs8UQH3b3FmAC9gWXuZaUyahQV2Md8F0cbBbXk50TdP22XheKZQUGsoQWfX49UBOqBQFQgjzV9G/3EaBkNprPzqgrJTZOEgt/uGNri1aznhjQ/cczjZQiBBgfwkY2Y02CFfKasrGmq2U/Ps3BOtoMca6/jsZz+pn9LsHTMRqKds2dqGbsconTLnhSlQuaDkNe6Fjw9mllxSlYix8LmmWi9JkYKPBzmfU7V9zAOBEhPt2tCoBcGEovuS8NzDC673w3+a2WEF9c8sY2MV8yzd3VmG+R1GSLvj9bVVW4WvMMCePqZopSYBJE8xjZVIIDA+NotM/Wq5pXJxpr/ieGiEaHR26KQ7D0fMDRH1DZec8VneR/clUeEz6tnb9I4ne9z9V/GrlCu7qqiRxNjRzhHdT9Y1xOzmhxKlpeJj7SqADxHi5DatklqkuCrR8ScLb08koqMjFSh+ECdcx53ZUMRzXB0b/DSaFDgUes0ZkrPkKjFTOb85s+5siBr8gXq9g7WipCAcjx6ee3Ayv5cJggYzvUujQvNOBs36Qmeu6urXA4iqa8GOZBFJWRTlwnGf++VfhvP9+Z9KfOi3tsP+EkQm8TPMjYxlKAL5wh39LDum/SzXixEIObCciWHsdeBx2Km4dwuYyjPPs8xeRkI5vNrWWQH6kLGsbeqRp9SpWFK/mquPtQ7/qzQtZa+dL++n213RSteizp8Wb2y0N1D00FK6sdLxna01r3/pvYRAGHpEdfkNPLgjiP/cL7o9D3iYhmRsHUxUYddzijIkhDworZOvOFCEPS6FKdqOMiflIYbXxFy3zu3N5IuKjJhG4aaDRr/kAUzdnZjR+WqGO0ltyO4wEXPjCTlpX6WvF5tQQmxACFobnYzgVuWMmYz4k+ebg4hH/MXHiEf/k08cHeoU5kSE3CkwkGOG0X1Pc7xPn0lg1hDoZFvn6rdG+tWqEtLRjy7/Yz2RzkvN2oQsSad3fUe3yg2NjZeCIzRHbtImtoT4449BYxyTIIAz3oGJwbDksUrJKHHGpEgq6O5hPwzNCvFiDzPckAwWXLI5OWB5k0wvZjTCixKtL9TGtPNG2+naDcfx4hPTwq6ZVXQrUcsl3TZdWHfNJISMX9XlNlKmPanPid/nePTbr9ubjEXN5njIbn0uthnZ9rP3f75Y68w1SyTvL28RKVGXE2TPC8wcf/soXjJ+S2FOVuK+K9+j/FNELNFZkjxAUGfgT3osjYMTmo7/6i5Idl/H18KUwbDUIcXNqXcW8PZNhwIHk/UrVkQkabLdDwctGJK5ntz9XBENVimzkvVlGl9SMmWSZ/7YFIchmMtVg8q8XavSVzoGXC45DEWlw0K8EGsa4+HOg6YG9YNy0+91Tp9vFJ1oB4IFb2QYGmU/AerNA//u/baCabicjf3yeBcQKyFlpXsuwdkHkfPWLGKAwcbbItiDvKTOSoP0m7u1hPRyYCqBmgLn+jTblY8fy2UCEsCwYdJSVco9G+MOOdP0agKRskDJEGgWkQu/NFvLtPuRFpu2/TZyQvT0aXQugnNkK2jCRB0ULYz9B7FEs/74NDbhzCCFINCZ7IHMVsJwF/S4Nycw29yQr9jn6hDhd/IaCsfVcU45HsYgve4WeZm29bU28j1JftEaMHmYBVL3q9DgmayMB5Zc9drOpzl6Gmw5gzRcdn1V4U1KAfhpcO3jnJqw3/BuNjVatZNaBGVX7ODuBlfESSGp5R79sZ2jE41u5pAVfT53vAdcytfW2bxTy6Czb6kmtTNYbdykIIqAVYlUt9ri4mVZzWzHE+W6wB4wk/Xi9oNGpUHVU42tjR3uL3CqRGVi347rvet4raR4ub5731Qg21RF2HAueu7+FGWOMogMnd3j5lVTqwkothW1VjuJwXelYXvYhwhM5ff/3Hr/1TE2yvyh5xzLNt6vkJ69JcMM4dNVMYNYumSR3v2yBDXYZX7wegOSQOp9+SjaifstdM533vjVwM0xW40ACIpz9xDVaX3Kbd/G0fbvg1EZdv1ydzUJEJNSI6GoKysZ8lUflx1m0kcFwgQII4pT3Rg8fKuoyhuHn7IcxLSBGd6RoGKIM1DIjyS60+dfMtY31MGrMxzaJH87EU1fPOfgc5E9MCWurJymSlrXNIE1SlhHvpU5dEOlrJTeVNX/3BPjAYug1oMX3GwC2EUFkquw4nRabvdZkDnclitCZW8u+R12jbEUzd8ncA8GF8Xo+cTEeoB0rDGIuOGBhyFqKCJwplO1znT9rF4Fl8FbgGA59hJZfCLIlXLHr4QHgBXmSFMsc0FmtkZV0AMY0tvOu6ej3L8LpQW7smHrqlDiIBHpWRBsRzeCIdhQ/mF133vBPraW2xUY+0OOYeBudwjQNEvirv92j40WRyjtRkOJqvr52+XuH3maoI1o4ojrEsb6cpjxLI/QggaMjS18J4XRWA7hxgB5OncW+7YXNUatRQ7ctsi5tfHEANGReqGV8Rf/VqVEv3+dEbiAhUX5XCkBMfk6mhCwPTOUoiOVuyi9zct6dyUPAzIGBbAbll8+vMQMRSi4pPJ2V+lOz7avICjiz00LlMJs7+5pSyVNy4Er/VYNX+UgjoQthvUSPbXxKZqihbsEog60zKrZZqE7Aay5CV2iObVqfsp4OWIfAiIua3EsyslvTkB0woBGNxinZ6/PVLNP0/5jkM2pGpQcp8fJ3ToVSW3ZmhYzmDdIVDHvszstaBEa/+KtWawSNTTMIxAeVtKszTpI0e1wTY45HpCHMLrFAXmHwIWe6aaVM76csmgLgn3DxPj45zvqn3/9TfqlrzIXQLbo3gec5PENrfs0urMJl8GX9jZdQf1VPbLbSrYYs0+3fVluPNp+lIlsNXXIIEKx2IeP71r1f0IQo5xgGGTaOLeTJMsXQcFNGoMnANQovMRGTnmBzEkc2/aSQ9t9R/c+2iknqRkBTxuW9b+xTVS/5+OvyOgyrZaAmsKTEAhrACimveIKupUiKHQSQ5q9v0MR3meXnJXC6l/hjHwVG17H20BFzJKz90k3NjnV2s7qhekArpi5ekcIdZojHUE0lYKc/6r7hu/yxdZ8eYCp6i5zZTzn/KY5fr1Hs4Pwmg22AJwZh7QLZMXzUkHMTVwBkh3dhdARfKLc8tc73QFZ1UTEjWjPym2k+S4pFOnrQY95haFjCyYAAfOYPdoEQ9BY6Op9BJUreRdlr2K0uLllABfkE/kfWO8HZc+M+tkxQz4pKdJw3wYbSeLwHwTxLz8Fjl4Gz5lxzjP9lUGVONGXWlZWBmlKYpFLOnQ6Ehu57/Oa+sSZBuC7zei0/pS4oQli4C23OjkyfrrMiF4R4JCJ6DBh8qMkEfHdO6rnpsn5vwFvEek4+jInpgc/Ah2Y8Prr7oBkCTUy9kuetAL1ZzcBTGqnuZYm9q2EVUrm1FStJ6yh2i3Jxj3o+iZ1IVLTK8Vy//IiDMsXeGgKb1gDeDERKa3oNx8jlmflhr9SuCb6DIxpQQN/5YRDHW8GjDOYvvJFKXgsH2ElZqYyqdk5TZCIiixSJGzIVcv2GF4w01B1pDcIgBWVOIHEQlLwMms0wTAQKrxhs+rqhphnzs7vIs9cVop3ZOl6rAFrS9fqL2naVO0Ves+dOYYFvhW8iuy3+Pcw4aGUCZeNlBMDKIYhlzoP6NRMRUKwkDvZWxmfY0W8yvr/TsBXJRIe/lp+Dak0STNoxzeYLUQNUf00fizUKfaPRLo3nE7x+BVwjbiGNijB+Rg2b1VvHideSPOMLTDjHbsnb/M9dUcKI7A2YkrmFWyN0pDkPXsZhXWGmQP9CERqXcsJEkd8Omraj4eFdT2RUk4cxSX0AFzgjV8pFxbbaNyQCOndDUNtbvYosmLOrsQwh3VGArTA14UdOBr6j4WRzmQHNcGWYDxizw/+EkeHhgPteB2z/RX0VSu4pgZW7mJ55HuJAPXspPs3O3QZCNXw0Bd5bMaHUUwowtwqc4Bz2xcpX5TpstJIGVsyN0IAw1RcORjtH/ZEZUnbE5HJmyO9XgUzsKM2ZwDNuwYWhPuobekHOm9nznVUdPHK3QnOvxD9eFLejFzsMGLEpzAw5R/sfOzpsmzMixsMJ4nTFHT3e1U/yRQyf7P7JldR7Z2v8RF09c/iTv77fv1iwGfE48vzhAbVSXF0HkPRsXnzoCJ8SGwcZtSfuLsTVwKAB90OLSJVTrTeyQRbNC7KwnotuDMhfehFcR0LDM8lwDziKD9RtJiY1BDxtk7Rd7Gcxn/V2d5d/6Knoi5Pyv3SPDSjaqwNeDqgcwKWqkSMcAOD2BYuTAc0+USM+ywz0MfBCKHoIO8Elb9JtuIanQGqxMWEqAAoRKSABpkvNax2jH8P1MWLFZFqRyOy1Y1/g25vppP0FpXEtdJQKgMoSqR2TATtPNlrUtTXtXfngc3Ymg7m/NeOlnd9zrRvFIUm2cZWSdabOjtZR0gISUYOEJN8L0p/1fhe5ko4unl4eZ91PMypkICVHCCSgoNFP3SlT3H9X00VJoEW81uhnKf5HV/gtAr+bb5tKxLL3c1eYkcvf0J1+q+ErlcGCSdgD7TCPi+AJ8SONazPJ++k1CyJHdenhG6A4SubQM8RlY5Z1ur1sIiRAfFXk7SUP8hClNf44pzvu4RpbKFDV/3JdiWx/PKfPGyyvTvEIBfeNaRrEY9VUn/pQWIiha/a+TqsFNaIcUShW4dcjQs/TxYfykpcDDVfSBmajHukOHGY/4iSgh48IxjlE1dzFtNO94sgRl0tgSgKSjpMYMmH/gy9bIlDYoADuSV4CknaFvMqdVBuqK6l8iwKZvXIGFVlaK78Xnx/SlhkzpeCr8L3HRzutLmEzbC+FXxa2As5v/9ZmrNt+Ph6xz2HudBj/HNtsKOK6Ujig4Te1Mk2juDyKOpIHgoGEMu/yHUYVRou2PEHZ0siOVWb9WaZPBHxuAOmjSVeFrWmJjLR7I1lIqKmdC9RAbqk0Iq4zHdnT4Us+ZduoCdseiPneXHwWU6w3VNtwnAZrUPsjaQeBiKcrsxxrsiVM6w+qkQyi5dFNbJiKpn8EdDQvzLO0pF1QlpaMzeNexNN69SQc5+K+svx58agpy7kM5cm1PN03BQ4mKSli8Tggr0Pri65lYtuZBNYPx7fJwGt0VdpfutRr86803gGo8gQjRBqSBBLVjCZMV0u0yTDZblhvHCp9IaL0xjJDsZilX/gTsvu05TpKy3uuyUD2D2F0wc8QhwKvkD2dZ70IzyMDSQ8mUPWwi0yDDLRqXFnWXbZn3bqB8vcMzWoe0qVzRWbxxLZh6IiPQPpwfbE0xqJGDqDMQ5xE5NPhgzGuAUE3JpFiq7vLW1RPv3B9FxRIwZ3O6zSXOJE3MxYQEFAJbL0+xxFXQF0CvXIvpSuWsRoqfqvYIMcWUztw8VXlnD+ZXzWytkxxJZh4K4U0af8i9ih5s9hmsutYc0+VaBzitdiqEo56c045jAvJ0MVxV57V+Lo5MjEoRCEd32JZsINL64fKp0Iu0Lle+e8WpLY6Ei2iEt2diJuKfygDeJMnRvrSBvkiscsKViwSwtvZgADRuSHCSEiucu0Vge2TUuf1xFM0Eg5Iz7VGkdwyNntG2NPw19LNqZPHoBTyZJnEibx2rJ4ooRutftVrvgHhXD2lM3DKmM3TpsXUeT258FWDjenFmMidx9rDwi2RB2WF28rBKeg/dqePiF7kzxX8bo30st2tefcIyyFRs8YwXF2wSDIt15bWan6mQXIZpHsIQFKG5aK20Kk0Ssv7+HNC9TSjmKaMNZbVYF/r/UfM/vZXh5OH43m980/RutB3koIgaw8bgINZ6gCayNmhmVh8DBttOnFhe97jj9SME6LZN4zhu6DnZglhvjGeAHI3UJJioD9NBYLgVbhPCUdvbkcA5zThvFm36N/uuIdpXy+zPwEiJR+HCNjOnsMRf12bjyb9Kr2DGm+Uz8NsMPK3lTSvXAl7wIMiKhAUiUCHcnTQ7r7paF4XQ56QAYIfr1NQKhriYoUuGae2RpMtAsAFZLOnTBOfwmaMYekdBOjxwbaJqBtYD0ey57xbFZaIlgltjcWKe8aUAjuACcrMGljI35SbYuQkMYQUUS5Jf8hJz4JSHPDr/rBXvkHJr7sOaSKaXocWraHSrO6aFVvafWQska8b/AU2fdR1JvbP1QQhUvf9RNQYd2nV/9Q3xmaxK4528KuKn4BWSXV74NvebdrxbSn8KvzDvpa7ssuY0haJ25cI4h7IZrebpnREDYa2DIWgvVvUZJx5pMPGg0w9c084CtXXJ5cnX7CfZ8T0QYC5AWndJx5Zn8335dwHcaev/MCnubtxwQxoPg0a99oPXxYbP7biS6mUMvlEUtvox/5U8XBHju/UeOlm9XqGTx0nb5+YKSqpPFerYmYa9hGSvuzwAFg5snqgPbm0f0liQbH0C0i/+aLl2oCtJCbXIrxIUEy8ZWORdaTPLx8xv9GxAQzZKi5vW6pDiHqi9bFFV9tS9oKej7R5IrKFgtApJVKNB9+R+RzlQwPYMIER60H68uC2bYc6BlQt/uzz2zkp+Yf773K4OA1oiddd/9gNb4QXL9msGJnM4A/nVAs/3SgdEUP8PXKKxJsM3oL91gsrjXjAa6FFftm/Xy6lZegqL3vUKh9YM2EjbZvZCcn6eZysjEOCEHvmKGXgGjYpnn7uoSPSEgLudBtBBWMsouCTUEi3sPAge3iWN0ngi9lWFeVN2cShzgyAcjmgvjKMiBpOdxDq8tktI/wcpdHxc+xe4v8aiYJWNHy2Li8KfY5JNkI2R6TZt098oFD++7c4Lh42cFKSqizUES8uqtZFklXg9vl0jXpHhUpB7/eWkqDthkotO4AKM27sC5fjoWxCdfM78Msw3qsR+rxYn296HoPmSmzkDDA3tkmbFmvJnVQ0qQfQ+UZdGJy4AEr6fIi7fSbIxnyuAwTOXj+10po5PTfoai9CZ592XynYqgsi6WNlJCe51PgGBNI8CcpcjjPddl4Js5VubUTVyz51dZPW8yOtf6uWD2MIpCL6NdsVq0gid7ytjjhD9LtCDWyjV94qCDR1/AM0djwezaawQ3VHX70PHALw+ozwtXRVUytRKymaaKNoaW1AAU6S+nakaJmwwpAqoeUK3Yytfl2BusI9rIUv6WndJqjNyNj6m2Yin2af0+Y4nqtMaqYV6ES01zgDxunfczgzWNzo8lzPO/AUR4YRhHs2iXtLP8gh5TNuvtIwsXe9xgDN2YOsvuhiGhtzxEMPjn8KphxvsbYPZNpyvwlb26Wt+LPe/29++azcmaIgXsdK1WiHqNe70L7QqoV0T9qTJiGK5Cv3cysM+JM4RcLW8eNSDNoqBHUeEkfG6QU8rBj+Cj0fa3A3hxHtg3UdrMJrjDIZMpv2SZWrjg109CwQuyNA3HXVNbNBFRtBLGkjCb+kdcNcBl6XzL5lgIHNeO5tpE3edIRCfgKhCNx/pX7TsEhyfhfkb9cleZ2Kf9SloLwUC7QaMIXk1bqHvLKnbeKPedfeYAqs8AiAQ0R2711BW9yj5LXiDKtLSiUvxLZZ0BpLakc5Bd6cstCKonW/1ndtvJLdnaytsStdiKYCrE6Ch3faN88BVGpnP98/zLojd/qqCXCfhWnEUBsOIAgIyw9o2IFQb5Gl1GlN4KlpVGMuqPTD2Do9ea9hAWaNX7/4WDuAB/c7PvxOvORE5NTiiS2yQagYRFiEGpCoIANzroKGeSuqNqXOccQePWifR105GjSK2Ijvd/G1FBT1no+3pWGC3j3+HUTpC/2xUQ96s64MmJIes/GalKcNMyp0yiSU6tdunexINa+rNlxiWlmEdgDxz1z2IRPz8ouDSGhmXJVbPXNH027aInUqjHgfQHUlTTy3Y4W5n+d6tergcjUfZa87S6li6tcCp2+yyfx+AofyfkyyvGU162Gq/hXFngIATg76jDxP1hLP+t+CJCiSNmwkAv0t4iJfd5hcEBZHcGL93VfGj/3fhaMdqcmPL10TGHehy4pAeFYnWMO+EFbPFAnQ2JsVvtBQ64S4nupv12VTcDAZ41w16Zpp1kPdGcTIHcMwcOh0pkTqhCfQHkWYBHedAXrf/l9V3csU9dP34nQNS/FPCQ9Nb7LeglB24M72gpaCBoPiVZ4gg14lzG8SdTbswdnLEFdv+f3Y/Kq8JA3f2AGf4QkTHpwWkwMInucusseLMpRqQPm2Yh/WwBnhkhnzbnMKUDOX0N480KZtsU5vvpN4M3g3IAAk3joIdz40wXHsAovGvRIk++wj8JDVHq/uLeb83rpC4OroxasmNpyIULxe2rMFobNBWCxMuGmoFvFOfP8FpirlGbnVE3SBFGSpF39qoIIgc0ffc1XKKqhEiJDYzDGh1bdLQzWrw7tt1NJXsjTOfWGQwn4ATALorPdTuvQO0ZbSeoa7+X7xf7V8sebPnKTRrFLaYDBeZeQyLuJJJuZr+4VaOrHxs54hRRhKkIYueqSDC2aK4pLMhofNsbOfBGLGl4ZvAjaysz65bFAqoxomcSbbqzjEyNRbj5PdrYR3IaNyTniUPKt0GgfIOZEco4UAi+C6MG8qhOOx31qlZvyAQtV65r0QfiFPTHVA0HkkB8De8SUYcB2+SA2wZ8k1Kt30FzwYf4eR0iBbmGt82Q911GWbNulcLSYYad1qCcz1nHER7kC2s8/ibWZCz4z9mavIVjrTrradCuYaboC63XT4Rchp4banANOUABVVLsGIOOvKk2ATOwA4R8mN7kOtrFm1yHOKhn0YX1aefDFFk1uHW59P0A4yCVY9fSqiWm9AriVX9ty3yhMMfo/HrnslUm++kirQ3E18eT9bvPaCV7gDx/NP9D2cuTN99+bYwhqwQRwKnnW6qeDLTyf3Rmz2IB5L83mFbFXBUi74U1/KXhX1Cmtl+W/omY0RQRXvSIw/rqM72qNZ9M+LpFX4j493BB2rZK3AMRQqANselOIM+nqVyqlSXtQXmI4Cs81AahCVq6pEeZfTqMq510PfvmXuxEm8vt6l5lq+B7IuNuMfPHIT5LPgjIkwKGg6Q0JVKgm2DSk9MWu1GL41jd0BXctL6Eu7zsA31XG+Ov+U9z182I3G3wdVR7JVPItBrHG8XCD1ceHzJ4Q6iF4qGMsgfHNRrQQ9byAZBJYEUCSI/soCgfmhdDWNLmAuHwfgXWY3EXSdtyPL+XnbDmiC3tMCPYgObASllvNrAbfsB4oR//D2yAUnkf+zebbMxLMy7R5OuUEt9pW0s2qt4SMh0Gq0eH+Ql4Y0l9Pl/iPA+eMKEQSyA+EvMwp0tV3XxgBcW4hNFNUPvdDlx+4mPx2KgUB+cVxCRmoi+1LEA6RB/N9ZmueG0huBULlUSy84Hiw3MyizOrrRowEwu0KX15kw+schh1rrhQxAcCjenahk9yCiDhgh/1IxtMgKDmIfy5/msnacIu4npljiW9at6uX4Oi075jTUC4YIhDLkcs5WcuZx6L4wL6cdtzzVlMTONG5ac3WUhX5P3ZF2cMEW5nJOrpqCp/memm0fZaXxY5S5UJq1wLH5Wmpcqls6UoHNdAlPdfQBBZbKzk9w8hWXV6xrlezQ1S6F9jSItuKoa/sgkwglDmKKM5hu7+SwD/Czb8F4gHIaNdsapicOVNtvACsAb0zxClpD5zyTWUy3+39lcyhjG2zwO6a6vnYA5CMCfT3dtMds8aEi8s/yFbvrE6FrlTQVfPHsbXX/5APhk5RYym/S18gvED1mSfpZyp7K7GL9HGRAOUZ1aDt4wrCBeQuV9vL8VxTS53EECID7a5KlQa2jAMqYMRlpvH/pfeBIISIfj93yYC/m/3rafAyw9LTismOVlrr9sTx2o97Ozt7EVgleay4/Miu6uO5/7o6ExoGcqZW2pGumbP3B4MJ3swPYibFBJxulJRfFgTbrvG0ZT8BiIy7IU66rpunKhWE/Xec8hGNV4PSuj5szO8y5OyvJa6qKXjjMjRhOygs+CgGA0br6mS7McK81ryFNif13oc5ILyV8BRonwM6ozB0AxaGUg2z9i8JnZkRlbTmmfjeSqRdTjtemPVFkjucHJsFDizUstXxmeVfagaCQpKQevgRhjymsaxFBmOeZIEkk/OZaOwhKxq+sPIxWLX2rojYK5CHgNTIz+BYGGn/izg/mcQHxURz/Y7hyEwM2Eq/no/KlUx4xD41UHzQJ4QA/Eyu74OkHfqNuyCvIKpYNeRWGAIQYmn7Ux1YW3fSn5PS/eyV2ODHLD2sFJaayEFh96m4BFZi9ePCdY5gNQo87fS3MFjproxXGLyQd6/LjbzkvWQoIQm+U5iwSCLy6DrxyLGw72UMeE7qa9kkoQRFXIIbvqNprUJL+Y3eS+s+2aTcoqixYZnyAGp/FYvV1xPWjCwicPJ7eUUwWeh1titAx7Y2tdyqRT4qwLb8V8Wf7NziHA+CtoW5C0VBR9GKlRHh3GtHsXMrgFO8PBpm6uxCMMpLynS5y5vN/KmJVdZbsLSEgulUyf+wtatl0KFw20QT1a8HhxX2tej5QMRUOAG7jZ0wj8jhVlVJY/IWLf9QEKkf6Ut2kZ5JlEJx2WvU1Af3sPQETtq67cvTb4/kRJDLD5y4e2gidmFlNF9GuexLChbo7TTOOSO4BuFRs7sZeVhOl9NbumHc5L2InhzivSs8QWH/hklXanPl0g4etlqHEFD1D76V5mBdf58pwyqkfORCXu18YoghBx/ZZku6B2sKhjMVFAYkE40Ij8SbDaqa5uYkFJ3SWKBdBJEdZPaUpTp1QK5P+4zKwIWRWEFg+Jo6sZUPokbDL9TwhqNDM9zqD/RnTuIF4ku/ZKWAGq58NrVl3IbpmmVRUNO6p2dzaikBaBQGgPaiCz9vpUuBxI6TErd8AXJZUgMT170zhwDb3yohZmY5wrQnemDALIWoKvnvMw1OqRXAgQDK8zho8uNdmxMsfy9WqlVl8FnXWSoz+RPStOEQDvZCgS2WiEINzyFsHvjreZwrVQ0Gzpu1yCjqZWjLpFs6QHq9AAN1zZCaIO8BdYNwbCj3V6RkM4xK16wGOLzimQCbpZHtqd5bn9NkFhlbRoJl/G564SxtMMPCJlLk2VofnMV7zyscV/DIg2HF1BaaC+AsEoYZbIFTYAhjv8LRh0YptIEqSWY4UJu33+RRqKgDhhGOyQI8hleSfvfg55+Ho+FG3lvki1kX66Vtlmg1VK/k2GfXjtkx0rImZ6Do36lFYCZ1GIOYfTql3Acpz5ct4BldxwSuaUTMDm5y59hX25p/M3Ww/ZIcdA9jDIVAPmAjqDdEmf5ZiQasOENQxApMNWE/ULzx7lRUbaRYH+lYTrtDPNdyAvv2czGoNRuYUXocazxYuo46yybeukm6Q14vbj1Dv1A+vFt5Jmrp/BJdRFh581nO8atMXFdx6C3tsGgPagcgQUUOUwop4OtCL29OxTPJzMIXSA0obAg0wXhhGUme15Oaie5u+CC1VWu5TvwXC9OaRkK/QEd9Mqul/MEgsQ8NTH4bSz25or/ucj+X7UwYTnFFXgGQa3EbEiIHsITs0NVi8AQTNZEdgUpz0n9YWsQ5xZpv7ldHXQlXnw0U82xGh0N4FqHBbROUVpksOJ4NEr8dKZPgZvoHeRA661wom7imCxFFV1SrL5Clj4peETSO2UpKyJs08ps7MpivYJnSDsjdUgQB//5VtilhDsDVZCG3+HMpelgxsGdp/T1zwxxKE07xOCDLFjjEft6+IZxpAlLMXuvj6S0w2Wnimbgs8XX13jmgKWXHEReQUXDlkElBAU0lf86xzHDAnmO2bKUdPTQuvbrpYjUVf8D9lofEOK3377WnsLiNT2dti8YaL9IiWluaTXHgC9jWyrlX66VdwdwTeqCoxlfeIaeQgdFIloSyg66WbBEODHWeU3U8Hj8A1uWsleQHFd+mnqfDbrcUf7pREvzklyRN8atCAcHI39VbEMOybeTPw6fAsIYqHTKPTsE8bihv31TzDL8GcMOfeuahXH8fS0dhILtfC7NWH5isXzbxCCfjhwRpiNZ88T6jB7C4xjVCwgTY0rLvydL70sk41gfVgO6sqKYyCeQUNFXzyxR1PZnacs0XO4icfpUWSaGZjJASPAboh21FhHQrXX6bXV6GyDTgk9UB4VXvOGw0bT8jdiQpm1JP1nZR3CmwoXF4QxXrGuNOzkDbCg3KN9p7+6GRLH6dvxLvA2wlMlTcCIIziKOjzTRhkHD71/yQpuvyhqeKqM/yxbMa17oUBanKe8nTUebRyGVmhdj4gDM9qyC5jLzUzLwnjBv8fySG/3QPACX4blS3YEE4L7iEoXKxCpvJQ7/6e53UmsUaMVw47HBnEEGi45dzKzl7UijcUomcs6sN2ZfXptYsSTWnV4hHQSkB0tfShn2j5TFcRI5lbD1Oo37/0njZ1wQSrFGwXgRJqwg/MTY929KN2+xy8Te6OVXh2oNg7U0gXRxjl6F1AfoRv2Ob+8OJRrokV6d2emM59WtstFnTITNlnVrSICtTALe7AIxi3sBLaGFNeFe3LfBJrfe0FSqdtnkQMVQtcWnYu9R0kkFZ+p5ZjmoTVQMThMxnJPc1C+8gC1P98S0p0+WG2psHUlF9hcJQcviZXKmADUPZCD/3iBKxjtm3v9nfX6ZgGqv9quP+poSBAX38q2y9+aUc0AgbcaV0RfIDAnrj8wcmy5Oi+KVWDuWxyDRv1Jb4h2Je6+H/g1+U5FN30Ez3BJAqArB09n4VGPrhmkHknn2q3Cu68XH9C+UXhZc/o59njdM5Iw7Sg0789CUT98FVhgh5R2hPZ/WIC++3sNgL1MVoq60yqUNq6bFheyXv7J2JTmQ+UtED4PB7/zYsWmTLljM6CGD4lPEHiZTez+Zjd1/mKF4amVK5EWtaCD5TGyj56Y19W3ynuhB2ZXW9hVHN32STzkDDzKHBp46WiML1PCMpYEQg1tmVyCGEN5Sxl3da5S9U8WgQ4TAxdoLRB++lyHuUFn5c6lMufyxLZsjq+JjS+A7q1t6qXF8jtPgqzBzuaPca6wqUHkdobEFWWYDY2z+SyxfgshPHgkM+RihqeyT8FaKbeIfE2d8HAT6/j13J8w9O0GI8GxQwg6voFN6Mja8TCedTCRfHtFnevTHXf6MX1nvQMW5uGJGWxi5e/N1Hen8JaAKRQSSMSErwaiwiF9nfMc4U917BrSyt0B2aP93164Q3CsH7fDXHdHhAVL8KBMl+xxao/m20djVAbdWftT7p6zhVb8OURUu2ukfoo/Iv0efy1Hq4GbJlkP07c3yhHWAeyB5M5WJp+BuIssQl2Y7BqkVPi2UQk0jKFOfOikVK89BZ+hUR0JTUomn0wM7yN9LLI98Xl+GbojnIgzDHkAyIOP7y7P4K0ONdKFdlaX+lSvHsRswKAFwsqvLpxo+3r5X/m2FdBmuGCMLerR3oRRwaqeiHEV+kGmucEcUtK8DOpRQ8LE6MmPItI1AKawG2axpzqsi/BVYHMjPUk1r37mrKcM5pzV9IZI3KbaF8v1Mw6fOfldPDDi35ANPJckfdes8cjrwhri7OHeHHxlqnaTm4dvEfCNZMUSTKtLGpjrvEBrygVQguYetEvT/b79u2Fcm/wdxIWZ5ckhEcCiR0Z5aeW9hWnoHNvjO+0PA25u2cqh5m97ysJ+xuHDuRkSxJKMRtRr9gjdVOYgvp+yne4JGvXEoZWGtepwsHgD4wNSgsCit42je8ttRNkcSy4vFAy07qXcoqnUZIyTfdwmQxUfLH8+AmU08ChmGRMcpELGmOPnhXWwNr31k3E9iKg7JfRKQ7F5nM4jh5IZBzagZlBOgwuX294w3Wb7e6LsJjLndaVlhDPmRVdvRnuQr3fav/4bHGJuwppbeqZLqQhTQUtWXQ8Z1IDfD/fnsTGmbn2IXC27FAE3/Z1oOSaDIQURG+NuiawkN3SKecTC0ZHZjNRMBsFE6lWYOKLCckPE5e+xQnJeDPVTQeTQq4s1dfGDeVHwWAjWPkumFKcyBe9H56wjWA+nde9A9AbOAXtHlkHY35JBexJ/NLQkF7IKUnRMDnGR5mTT5TLJIFdtl0jlZanAABuKIg6aI2cFZKyEvTEpkwptpFXQPexjU3OgEJNrRSZTeWkgrK4T1feK/MoP0wki2OP9jIUw/9lhHQNnkbuNamyQRDmJ/9KfRQ2HizjsI677UCziYdNVGeyt6zXcdv4yg/0kteM7r4YTYaqOilDDC9KwsDS/azDN+66HwsdKf4S0ZMqUb2zyDp4xzWYL7PtXgtB++In3B6TQoHxcrxcKpH4mVXfphzhq/xPDBZMYv78U3nTEbeGKeOwwPRePDaMVqPEdZZNNShIpGhGIbn1j7yKNJTg+EZ/RojVd6rLJYUQ/K90yM07u+qsYGS0Z2EI1j8OgOVq4msXU8TjrgHcoNigf3Vs5mzvYh4KjTyBcpyMci+Dtv4TlTwBXyqSg2W66dudEsWaJFlBZxS2ZjBzI2QAzOJ0VVNuSaHvOcI+9VoIXu1CjiFhpsl+k0ccd+P2IKVzirxcWvYAraQq2+PF/C7seE23f8RuJOylwiVxs75K2xYMdXDVqJiuftBDKJbPkAXB3jDNB9NRPhyD6QzwjyR9Z0Icx9/sh4H4PBo46gJJrlfsB7zQw+noKZ2z3iHBRkse5I6OQzTGeXo0Iicxk5fjQ5XvzyvkPcCxi5zOYTr8Tqn3YNN0Eg0jwrutdV5sybmYz1wnlwSYrjvqGIjTe79x23zfi1sWFs599aDm4ay/aBYwJgh+vHq6I2Gvj4b+XAbk686Renqp7o5Jrxp+VrkjMVZZc4Road6rd4COedSsbEUtsz002iozvFIX2YgMuMnGwxyth/X7tPkm2efmGi2ilhF4e5amqzjjlosmizkYGc66oAkmfl4YBkEneJ/hQEkJBONBxxBayLw0vbMURkMvxubx0SMnuyl17GEVfpFSS4rqzvYtTtic3xQWYY5rTO8Q9yqg+sqUxEPW00xmnI6mBqJtfdPGbxnhPnJDDWc74pecD3joctaFpiOPtqRwNHL/sk78+I6C4kmF9Tjjp/pmNs2OncD0UDBtXf8BZZPLwtk4pfAIGCABCSAlZKGJQ9Yg0+KM8pwFeQt6IKSQJss1umhLxndBLuDjs1v1P+DejhcA6pLvg9iQtZSPnX4GnGGblOh2g5/dr8NIhtp3CuisLwktsyw9rmJTji5U3jL5ISrX9Z0lLv+6fZORoF5E6XC4erqtz/N471V4YrixzslHNeBdQyw3GTbDO5dhNAK1yW+giR7CP2xyQPXPbCV9No7dFKP/Sa5sWpxaEZ+H0F2nn1xwl/tWphnPG2uCdD7nrGX8vsuOtfrvVs7rx3xmAgcfX71HtN7Lc6oyNHTZAy3hNieji69MR04H6qebH0Top1cDjmgTCtV4T/bj443KTx1irzs3j3stji3ofpizI3vdIqaUkXa9pSVfA/I0MWuW5N5p77tL3228xu+X0YWaUn3wqilmLSYhMZkzLhX6ZReJ3Pu/yVWW1bpxZedeVs5G+tFu/VIILfNHX5C8QcqkznfDDKnpueRFT+QNCmWsxklS0aHJWB6hj0siEnoBZtCXjOGwT6tGCqTkvmRWNnsLf7djKOhUH3P+u3UXjNnfOCFSuMme6qXDpwWs2e5p1SuUAO+GdJO84BKYkVdf3rEZJS0R5+36XLv0FETLJVe/0FJ4RqxnOgkW/nNR+hdu+ONr0J6lMPfVB48cLcVAI4MA0JbH1rFZ+7Mk28/Z9BXXVJ5xN9WRzFZseliGvHNAVE5KGM8QnRuAR+rrdE5faR6l7ivHag4FSK2OML6CTdKmBv6z59F5o0JIiw6fXtrzZR1Ex8T0zV/d1+O3zA3cXhTy0naFUmmBgG0JpRocjLgcHnmJ9Q4hGHE0MuW/gNfZcHmyAACyFWNMoMQkqWFTlu/hQIDxVv/9+8tbXYRrFcZholRV3yziLXY6KCF5hqQa0QIYIUVcAGTrVNqNt/WGdfciTK5KtxNg/h6TtoxaBZEF04dbtZCwrxSTx7whUCBDvfziyu6FHm8vkO8LTKfYzJkllS0x9/R+chfSESQYpUNJ88Gy+kxLcJ+1A1doP0Ndnj0lQvOSw1SQPOttZtE0tTJKRWMiPTItWWBdV6rVNscqLoxD+7ICkCFzieGANV7uuwL6a6kle2SxfVJarTZ6llJEk0UyJdbCS9i84+SyjzLVwYHQZzZfjwkKso54Y8OkK5Vq6CIZ19JoqHj2v4d0nwVxYRiw72TZhXSlSluhez/jokzyz+D3+aqdCisufuJYsLPLXz/9ADMB/iqftf/YPtdJONktX45AO9HuquViILkXdKnpQfrQ8AMyZhYtr6mkmfy0og9S1nUuwcPQuhymIVjCDQI6+gUAvchEtJYg+5TOnbMhCZ7xBf0dMj28EvYcv0m1C7LODJIplaCo3rL5ucLnzMAK19hDDLbjDVTB3lNDDtR7E0ThHe7mL7kQolCFsN/lEarX/T+yuPSXfKLd7BU1dVXgLNmWhdAgBRp+BnUJILKLjGkkJ8RODdYdPpZxLKvleyEG62VFgR6D6ghulTSCRaziHjpOxhmnxvhoWdkbxqrtPcY8hOjCoLlCwyKH64wogyARL7+5YB3ersf4/s7iDjQ5juUeqCZVGbm7MxdaRFaRo300TSL/X5u12Bd3ub+gwXPhT43mevh35LTxvnfWaDv8aHhpB0n/0ENpmfMXyv1cJ0Towv5YDdwRoMXpgzMjsNR5eNfaHFLI7nUvNzRGagdZZvMbPf9wwpzWxRYb6gsmgjpfq+Po10SuSNr3xf+eLdDC0gQuDEJTcy3bpy5QhNlmFjJDiqghTNWdicNIf1me//j7y9NOSKSOdrUbvALaBlPM6aWTR/TBp6yGO7EOtrFalx2v8lCHb9X4XCcVbq2GRquy3auqLnENLSHj4GoF3Pj4G0/jOabjbt0SubFu+3OxJYiZQGulEKhcE3gzleCG6ozE1p96h4sM7Ge0/BGXtXhIjGU1P8qPBa9vpqgFTrTe1dSVebZWxC9lJGvKnZpqVRZwr5Ma6HUMkGxkn9G5jCW5R+k09IwA2sv5HQXaRHEfNSTuWxxrZDQ89oI4rz5ddjEUqGcAZm8H+vjOJxSyvAZBLvRLPgEx+9yRfxaTcZkm6UaAgzF/IT9OW8c+PWqYYbZgGUI5LRR0NzsQTjmms4OmlptnJJqdhVIWCR0uI9OzHfeHESCdRhUHo5FsXTjIiv5RXRo6swUYsffvAmspgjnbNoUMZ5yMSAngrQK0feF0ktOO9hssjG9vNatU4H8D11cz6lr332eKe6FNrPWQy5kPq8/PB2b4cCNeiuKxww2qoKHltWAYRodMiUdU1QcERAwd84UWyu+lmxP18Rbb9MEIJvQyNDjLiB0GXLl1/uYDfshtcsfObira3t3FeaMHZHN+VopAuU5E5/9ZUbZd1onVe/YH2kgjUeFRzi9C7CWTpO366xzwguTXpPMkqskCDOXodAVKc8R+7/BvKITSrSol7/F+e2Txam+5tSqBV6NWgp+hM5HANx1gUfkL3TrlePr/1cVQFatcXkPXkPwzsF0g/O3HZ3re7iJ+qg+aw7NbX/nSjaubkQpSJ03kgWM3XlwChtusAb+Tj8nV0NzK+2zspMtiIdtcdEGoBuwM236RTMOany1ZOrDuvlbixGelim5eHrVxkSQK4qWoNtL3FSUEfdYaNQh010hMciF+1oKrUfIhryGd0ig7fm4GCpwtYLjrumMdH9MBWoBcCHWo6zuIRegtlg3mkugoNBICrt5L6uACWMd3r3siVbbeolfcFWQNN6HueNYocJT2lde1xeyQ52cudk3jWe3LY2LiCQwgbAMSgmeyxZvP1RTbJx0cZvNfO3Ca1zVyQryLV62H39MX7WfVXSdc+SMuBGjiyRwEULq9Q/FpKWnA7KzdDKG5SPz8DXd1liMiaTa0ISm+5UKnzjjSTGy4cmpdfOLtW7s4dSv5NzRdRG8Bm1DEPOdT70mO3UnDgtBGtjqBvIyu1FRAhkjr92GoxBTGTqeqZWIdCXRY9ajqug0fEMospbhM5vmcuKeLjF6wilNCLTtmehT13mFA7GhAYj0ru0AETmTnaBo4B+8K3sOhZkXNg15LNTD2o7CLkK4Q3IRz4udUItOzrccQEwU2gU7FmU7TqNUdYWycwkPdHzqtyP++PmmXWUosJyJYL4Cdq9abzdzxhZDtvC5EqSEOuOK3BOOJbQdpxDd7yKxq20VNMT20AsC+rvkB+18/s+3HFv32ovOQEnKcJ7BLdSzp5xRwf6VOSlyTLYOK0ZClnYO3Rpje3OSOub0KoAWV5i10c50Nwd0zX5XgPVphljMrVne5pxe8djLuYE6VOtZRHaa9H9xbARt17oC0R+RPS6uYEiBrcIDClsHyNTMYSjBM3q0Fsj+SguKrnnh0B/sz2szKH6fkTGpG3zGIGPSy6OaWNFs4nqKf+9eQV6gwvrlEJxRAAOkchEqQAOqswam9jBlEWc6FU0UdZUyDtWARGS6sscG4fbKVrmq56vdzmy6ub3OMJj/XJdCmAOFm2D6Yr4VbSsdN78hRZmTBsQC7HDuuF3wQ3A7IPfgt0gKVouuQfFeUMQPsN00+bi8lXe8bNV/rUNR6A2r4JRXP4q8qspx2gRdIiGtJZjCrbFVjJfPvOLks036pSVUMYFBizUxB8oahwXsln6lVE8ctT9YvevDeseCkTFarx0GfgQkpYc9HwfnZ7FCBOjrOIg+xNiOZjo1I+hyKjeYUxGuYlV9DO43d/j/UA6DC49MMpQDruWNA5koeQyh11zkU+J/HAjvAqSqH0bUUsqguBNibdnAB/gRLIpSzvRaVtw9zyU1z2IxHU56eGrxITIeBghisLKTFYSyCDWRP1B+eFZ3P6VNbvH3pk3JHwjP4JVNsKHA1urqkZmnmbtrABffpJMYVsVqOkQGkeLFycslMkXzwHY8qoQ2TOVuTDd2Rz9lxw7AfXzmrQ18o6CoWOW+LUVxYiwkDPCF5ZN3Ws0unCY7B7jMUMGC8AfkMwWOv8DgQZZRH8WtcRehRG9kFbZoxacOjIR6YxGXYFFdN91nVo89pVmR6aKEXcUbCyuaw+vU/TmhfC+WXX7sJ65bwb57CSgBlBUjXQZ7b5fL3Zkh2uyNanXmiycRWK8Xh6Nd28gR36UlcqmPPemKvDJo6O9k2v5Ye5hFGCTy/nUWGFpVQPveA8CE3IIejyknO2g9U7OxidZT6ZFFDjUv/JOIGF/Dqz+YyJGOIDfCz3/2XChjwp4B4ceVh1J0J5Ot1eoL2I++MhOAqpaaR0GVoHDM2LY+mlo2ai19wFA/ee5k7qOfkuHx97yuU5ASiRNVf90lHmcDga9dx5bGUkoI2b19xK+YQmzY9Q1O5g3YkMXblscmaq5X7TiPzahbO2TAAAr8cWIFeIxIHpXS4FYp4M810mHPPO58gnWSKp+E9p7dmiPEA3Of+MJZyTCu/6d36TtSBNgZuuA5LIy1p/EP+4E8+L8+DKtA9f0RwgWOsxmKS6k6klPbQTmc8Wfys143fuvVUoLjhSD61EE2jrUgdod44eAqGTlO2rrXVNH5PZYgl8VVqpf2OPGxN3FKmXtz/w8lZhjzsGk8/1uyhqJcWl60aRcVP7oQfvYcO49BMRg7wSU3YUpuh5Qm831y3Z5TQ+dzrmIe62FF/+Evy3H9faWHGWxBR/gk4kzte/AwWHUzMO8cMBt425VbsObnaTYyz7/VIQVklJ1i8K7UgSWgSuvH72ZS22GND3yUx8TfPUxK2HSxXrwJDnvT5+nqPhMPuqWJEaS2ajojXtUUToTmBiB3lTou/3SHNd5qDKogjIdnzukxKbHhJZpVOK3U5q9G3kZxL4EZ3n4pkLvUk2KDnFGLmcMvP95LtAGhMNzXa57SvMYVSDz9b8SAmuVOAgV6QGudPs4KmzucHOn38CHgDlJT0kI3eTXNWA2kdcQfoyR6LSS4kG8cwiGZ4zH4dimvWe8RvItXRSiL20ukxbunActe9+XFcrvyAOztc2FxELzZZ0oBk+fiVbYh7s2X19I535GvPbWrAsD/UMqc7cVLnFLPKIQxUbiiCDIexerL4qa3qf3HiFSxrmZL+mjPf2Lhf4bdhLO06cHzYg95vRuq3ZA89O2NfI4wGsazV8eZkpPc1RI62XqF15qRVNBIJeC4AYpW9+6OLlhlt3Sj8Jau/LFVD3avuc0/teo8Y96YC0qtEUnVFQZVwHatcppxfsVQ1bXZWi1CWxHVIH76vMtoALqb9UGGre1U/PbXkSOea4y4VrAhpnNJj7lE+YGb84hQolVJk8kdQSy8NngHNSQ9ftSopAfn6mzsL/asG798cDyT6CO83iZwK4lOSYuMNEFVzf1YP7wElVh/0FqfWkfBxclp1DfPzicq1keJChjLk/x0BsnULk9h8IEPxF+qbleT5UqUCslmT0tjvsbjeKY9xSCgP7/FlhG3tFPg9qpnC5XRYoVT83l7wwVxFZ3BJrihoO4WrxSFvLfM6EySH/lcNYnRxtK2sW5xcRizMfhr/VyT59piN0CGz/zl46rLC3q3y056uaqbZDa7F45vxjyAmLoMdNmcdeyj75cBt20ih1Jq5+0RnCL+k9ny3vkcLFVfVN9U//ySlFed9S/j++zDk/5jiGACrq4upmaA2Lu31JJqTb15CuWXNHiN+QWRUYjKVxGRFZDMsVTHV8xdel6cwp3McdyZh+EXsatC6g8gOyTo5NWVh2oe4G8sObNfa73+IwkHZ0rb9xUY0jxG3aiqX8EHTU583mooV0pXXxxmmPYsRSy7FedTxOHSXld0Biw/BD/ARMPgBJvBo/Hmwi4iUSGo1FMriVyT4F/RekjQe8v8rSRpadLKEXzaPQH0+E7fRAyEuMzn4mlzaZGwZ63jfXCFJwiqaxT8fVW+tIB7QM22kpG+xSY6qd1dATPU5/Hrh/YKj+zOuy5QRYi98J/Zp5Cr+9R92S0T22hPviKgidXvmpzWGfif8qbTWngHO+d2Lhb10DzzdgWjqdHZjsiuKWQC67V+6FvxLKHvpHJIGbNmNOXFCdk8TPSP8OBwp4iWiy9NWc7asep+oo2CvuD5BxQnwup9IHs4lvhUZzT5dRezC0areXg5IXEJTtlBg7TypKde4tpL8aocDCWbFkJ7QOP1DPpO3EeaYClPETgkvyffXs0MXx9Cb9QZRZoBpJF2FpmoStLqK7Ad6TWV9cBowd5P8MHrr9vCFbuPTOyMNfygY805SGvYZ/rcgHmLt0QvwYAWgXTd/3D5q/iRBqVy6kIbZjTd9qHxc4k1K92bqvmpOVSwS2tx096MxoR7fLwmQcQYIZPcjyzggkeBiR6XkkiQqEXssfqo18dndRV36kYSWERjaL0VMnEeg7GOyvf0L8KLS+O0T8RdAtUEUfm7GuLQ6Xcd2SXqAhR41KChFXBJ6bKeMkdHVbJ/EbwsVuLZWtzRKWz8r6ss4DOJK7FEp09IzsjCA0ooWqHbi3+qeCbivfyhSMWu3aM5etx+s2YdnQ18P6/qDM6dYTWbWgTw4QxlPTKQ7ku2Rj8NY01V6w0JeiH3q58r8lNIhS6zmzsalBtFODGdDRoAMTHfajmbpOlrNN3UztwtKg6F/SUG6fnlEjcfg1WA5rrMCk4ECx3wTVmh9wl897EOxGu8rfKib0ral7l8FXPHYE9dOWSpAzJh4zGQDVq2Q49x6hWqVFmnT1Xc6IARIhNnn+YjEOb15fYIGGb6wIWGEZWNIO25AEkbHmfLCHxmo0uDe7GqT0xU9u99B5PS/zE+NbzGbhkXy+Vux+8w/liTm4JcPaZIHtQS0wEDWZCfTMPm8EcANHcOsT/MqdkY8fhNtV1kTWNR4TUwoyMh7C7+ytRjhCR5EuQaUc3fN2DmUIDEAnV+h4ycgSVmITaMDobmn2bpOzrCv6a54kNfrr9gu4RbbkHNPXaQcdM9FCe2tHsudf+XorWaPl4lfEMn/Gx4r6nBXo8zGeKQnU3P55760aUAFfSTBy1OYcIKMclAa4iggOg60BN6o7JGgOe0H/u9cz/JjNvgt71LzW13cjZDGZm14JmRdYGkpUy9STfMYNciUCN3sY9HwDGgD9zfMGdM4th7nlaNm9FNcsPs9vL7lhvmiPSk6SVOlECYkc+Zuor/MI64ujTSe0adAupGeC6ueB2oODHmfyU4bAduWDCv1F4EpMSnn2trS2gOSYuL2SXcv39U5UsYtiPbZkgHbw6XHhb04Rv1wqYyddPdNd1OLGoH0f1xP95VNpwxHmyYAaLZQs7AgIrr20U/GWUb8ZeXxUGSru6bxcbEfMQop6i8HQZiTqYdzMRvBcG3Nms86whgpOcpdZql+WB0az3Kgoad6QWV+pqTikn6UKFcfj3E+UqNaJ9KIOIFNNh6dy6IIuRqpbV9cz3heX0yjGXF1uvmrOihcSYQD5scbHeyK97x5KR76+91R9OEVN4RMTY9OA8lhPyyxiyL6avH50JjLaoDV7fqC1dfFVv0j2N4Uy9/YDbZSIyPzDOIFj+9dCxazRqXCftmsVi4RouW9Lgc1oTMj1xf08VNfnP10ViGDCWP4RQkTjvXWS2dAOl7QI/Ew3bDkbDiAZRbPeGBraGqJCQxdCijBsS6To3aeF30vwdW0EzGPaTxCgT8QbPMKm52EN/sR5QoJxD6Zstwb9P9MgmXlCWrvkn2frzRrUb7NnawdnVb3ji9Lgn8gwlV6VH/g4gpVjCiSw6tlQ/RCdRkbN7Yjbj9Txis7t6QL0sBxZkH7BfSzh0iELliZ2bX7xL/gVmRMDzk/oQYYJrs2eOnATs+ScTzT2O+krwrlCO/HTYwtAGzlWRoYSiDnzlewib9bJxStMR2ELjn/ytJ4F0xINJ9U+G8pZXYdJhnS5CxKzAIjAhtI3KUQQQqN5zlr6HKqzP8xfkESEFWPtoZTo2AEUZAKGOUqYQABf68OdEcj3gcYcaJuxZ4fG/UWEi4sfJiWpyKUESzARoxoOhnZc5p9Z6h687AAkvu0nhsmYMNNxE2WjYl43cE+AmtLwWvh9Bx0W+CnleHW0aOTH5glDdCa4AhW4F7IxgzPJgMk8w4pbaSOIX4bU0sjHGKyy9D4JCkNsZsvUjH9TP+nppBQzjVNgndKicFUJv9NbiLEpaCPy2z+qhwhDm92gKhTh6RB+KJ8Oi4A18FgkSOJxLdonFQjb29gSX8Prw919LHaau7USW5Jvk62MDu4CR3imHvUDLgPMigV5Ao4gT1bX+jneD49E9OQzz4vCjLv6Sgw7gnsGs7YbcTuGO2jNvOej7UdKRMBJqZigmu41anwv1rhF2gMfAm5D//2tNdm3pDLe85/39plLhDah6erUNd/WH59hMFucSbEs/b3eUf7kzOckF4ejasY9D4T2iD0acRf8d82X8SWtbYzRZYFZeEq2aTPnxvr85P6ics/WQ322vAJoVlE+5DOrUgk4x/dJqF0EqG71YCaPuuIhv2hAPGbHlwPq43LLotYKgghyEKdQI9IEJNwLN+4VOUjLfSC9uEG/sz1CG0hVKSoUjcmiN9hTrULLGmHdRyhiKgSSyiYQ0QEBQAvaTQHKcuy7cenKUa2NffSr5x8wfXO3ECb9ScQYobsb9knxIIBA1ef4rU/Wis/BgGQPln6EwCPv5qqzJ7t3SoEXwtWItNCtUEDOnDb8odQAIZdmRl3eW5nA6yTjG44dg0+IgDiKABnPjMdOaI/TE+QkUYFLq7eFSHJsux5NH2r1eGZn/oSWSEdTzMXxC44RY562zwWXNEwc4E+IP1HosTIIA010iX49R2ZRYexBtLFgAX6o+Xj9HMA+L729pzf7J8/xdx0e2Yxd437z2WXoLPnbyLxJEmHzQCZW2XyEDslwvLMdpLG3B3+3mYBpYLzL5tPTTEY5onTNxc5R7yCE2IACXcUaWUfHYa30P4+7ieZvbMIkz0vq2Ems0HXXWNZNg1zofBl+x/PEAtg7X5clKjUYOMlkzyrb284HP/y8pWkHK2tSDKkWyekD2LhHeVlpmOJPgNSEqMzTBIEpCMLhKVr9dMD/aYqqx+FXDL9JasqQm24K4w9ArnjKXmp/eK1JiZJ+OBhK+wastZK/M9w3qh04Y1D279ERAuGO0c7k9ZIggNnNsiIfgaTGff61MbimpD4hE0GSU0HegWYEwHYVbXe/7ZwnZzu2nnDuamhIM6XRYxeg6M4bIezwMT5udmkWfCw4UV8d6wZDUlm9CGmhCYKOQEGqg5+CUNaY7MhlJckAgGBpMQ/tkh/XzPmbQkXeR1Ol+wuYqU8O3fjwlJ8l576zXDterBzz+aWumCMUxjLuSqWxICADSfGmJcABgM95sQVAXMUr/AAAb2sGUX73Gp3yt1bz+Uqv0zh5q0MvjjkSk7eG7JPwkfi1OPWR1GxABQsAGc6qpuWk8wOQo/gjpw05NpAtEg/bcjPtGbW9R9nZvJOeoFJ16AkpP03kM2uIjGQc0OmPa9mphPdJiUiHXsurj7CuKYYyVilc2ZLpwb970pkPZuHKcT8RorpJv1OXcFHJDLO5W5hFCtH8xo4Z4WUGlhpFVA2u/wbklLkMks7xCU09Ct4sGi877Z8tGoIIF9g5gnDhQfwENwgVaCrm8lrDF/IFJHuRs/QnRZiEFS7iwOnOTbM7dQv1r88ceJMv+E6H/yh3qOTDEzqUPegXNeiBa0GZ8dM8DxanSs7Oa9LVT7OQeOKNoyNRYmVlr5+bZyDlFbq6+Rd5YSFugj+0sji/KapeWnHBdoUVaYo1B6sWzXLzF2B9ipfBNdVqZyCPJp81zPXNglr7LsZbO4qbuB26Ao+L1rQRbbWP+iHru1RanH/FPeYY7q+HnB4VTXJ/zZNWTaYLCYlniuVLxyrFvMJvAf85zXmm59DW2i7RrIibrBYWA1S4GkdADuF5ruIGtg3h+Bfu1VOFduG4OTy2CZg1mfjD81CU3AQJl3n2209kyUwmHGOe6q22Cg0yWmCMr2wukiqPJ/u5Twz6DgPJoUwrDEr1Zryb3dZTHdC24aLgEwt4ol6p4gMZAt2eRCf7zzEoDkCwt4SIeMUyoDodQHr77Hb+VbBZIAAzlNj1FAtLM4Oxx2MPzJgAZSHiBm4XBTlXgKhJUyJuSWc3F1W4mj+9Lsy/PeIAObmxfrWfLuJ3BOkDbagxRD4moon8JRvR1ejLZo/7KykQE6dZn117WcJ/b+mQvNvrYipKmO/s7I/oNwaHvH2mEgY4qXmiiXn3c8bfaC7+0lUyo6eTrSyM+3RBJceNrBiAepDCNiXPSJnt1tOmeLjmxZoScqzITNbYpPaoB3CWdhcydw7MXB6NoD903B72+w1TJS8Tqi10LIXcTHvWiQbjIIlUuFMz30dKIYen3nT8/r6gf6UeJfVm50WMckdvWwx1jC5DM44JDY1TgzcFyrH/1lGP+e3NgyppMwbf0v2aqHq3/0HRnkcnj8f2HxHYZOA1uTsvnSr0NtEBZuPj8gmL8EDviAa35g/C+99EX4Lbhsc6ge5Sz6VNhfcijCebhotp9zSqPh9xnNeOe1itbUsvpN6WsHVAofqKfI/v3jUqTDj6N6qZWMaMbT5ymnIpBY38SOWQp49mJItSuuA2/ybVyoSEFJMDB6P8HOWVl2mo2XSgq4rHw2ciFcHoRxg9rI8YYL0nIWGJOdYte3WYfCC6BxgPpHoUEsIHTaOjqlMo9DAYoJCFrhCn8UvcVtzAQyfs4dQACQt+8GQmEEPu7OMcHlfTn1XiuzUlxsO/7qIMvTVmlsjBZZOLyR1yDk6CF5VGP3UdxCp6ADuSEADMsSAbcesMrgV0vxUZ9Nz0G555TuSy4CVi3uj+7jI8W1DCbDCVdCFKHpdJY3SKor58kGA8wzVFq/QmTD4nM6CsbmSKTvc95pAFo+CbS9llm5di76uouddPuw1LfFQTozi238L+LD5OzBm6bNQ7Qa1AZbdNWMfKoriLZzpv1psORf6oTyX8bZdsK8/5fRR39/dVn2EpiXcno0cQeNArdLM2baiju12xwnz1BYgIohX8rXW80ISdFHG3PIJX2ywk8JuQE4WOmORHZeJwl9uhlIlHyYDFQaGymObQONG8h2gt04F3EK71ZJjyQMx/b5GYevEwEDbR7Jvime79hEotWJEDGzk4uwlhFx6TeW8N+qzXmeYTdcVO5t0BBN9wLJ+odCdAueTsfEHkbhX/Kw3gzyDhLH6486kMxDxeCVYmq9Smcva3CRPAcvQBAAxC76+5x9qh2nqEYxWeqIMP9KKjMSNfRtvAqDKmg1Qj3UQAfkAAAA1lruqF2oMhAIXHgHkNHdGv7KzJLdk3THbEk+DgDPl1VYtOI5o5vJ0pJhxwUzOzg9xTeL1GY8Du8Z2Dj2dum3LACieMa6+uzpd15kVtWTxDygap8uGrfUujWRTvqWa4v9NoIIk8SarlZ5bhwWkgdK25EnYZE7crpZlIPeDFNrwL3ePSJzhyaPmwcnLntH0DjjP7AWtwa1wYsaxF3K1x6tKGyCGxXzVQO1B7L0AZNd0U33NrURLdvukp0k7qWkejDSQ2xUubQLO74q6zoifzoJrvow4LbU6dtjX4oPnT0ptxQ2wRCQw0EEbJu5Wj3i096VxZI5rsuHO2Pyuq1mAzzbtOFkAkTEsmGTgnOh20LpIG5oOKY/BhVTrLCAAnZANgrIehdpUXH69OmMQNb4vVQbUJAAANOt3r0JWhggQ/dLcGwyOlU9or1ZJHsIMqhiA6clm5zHloTmDyxSF2QgFwGbCx1Zif1fWGlErlz2M76eX3yTXgGDI9IOFCDb9ee6kt+wmK1KktSQQMLOQWg8FJ05iif/2KaGvJhRKrtiSMnnkfLRGMhDgJ+Xtyy4rTOmGIKDLU8FFPxn40P604JEUfpaGjGfoRxFJSJl8oNwqsfeyR0uHV0J3k6puMBQjIpVsCO3sQChnQqesABst5u/A5e4/3yt1mUlZO0SnFXAgApvySrl3b+jBR0Rw53Eac125zjUe6FqrPAqjUPt9x7hIWRTHAs/LMvarN13Lbp4IXnwr9z6E1JXSnt9Ld4w7d3hSfynm9pds9qnCLkDp5kUiUThkaj4JQZGlz56KHljCIEbm8EiIjKr8Hd/QgheM86vBx/aAOQqy831nzYnwHkPrc52ythRKEd9QwPWbhBRPMFPZXAnK9VAFlftYyN0uxnCuwAfSX3i+R1R1yGlOQs7T57en6JvGUbsidE5237y5pNl0rf9ybZSgV2LV7me0K+qTgbx5sSGt9HgTXyIz8WOvzdB1K5iumbJUPM+DSr3YfKmV8j8wVLnVf/OjMuU8GqDuYfBQvjshtNroqsxgIcFrjLRC8haOzDpfvvZPcoPz6CU4TNryt8fO2Pmws0zlvbplmkpO6m25rH0GtIAniV+4q9Kpvx6hr1LttygSn0Zx7GNL72BrhOpkkLAxb0D1q+KkKEhv4bRjI2Gspdq1uA7kL0XsKgJxn5oRDEe+YPu7j5SeNZAKsBBYiAEMUL+Kwhv3Ll3B4jrqSaCiQD+EVPUC7Uj0SZwHBM8xiMmqdxE/G+H+EWchyq2vpFMN21cTcfp7Fsg4dkL0WvO2XqicEMtvSjp3hPQ8QEjaM1BQAADKEAABWZwt7IQ03wqaOJc323FJs/HEtCJHxvi+bRSetejrEYPL0ZZFCFj274cRL7dveDZiHiaVDtV87LxwVr8/ueIb2vyD09Y8e2bP8zXzohf5ljWvVd6bbRBI6Pcuc2QgPoT7mw0DRfNkB2/8PkPgJE/Rnx8BkKHQ4IWc4k+7Eg6ES4SWmWxDnh0mXxW2pIU0hCbKZu2pcLHlpycgcf6S3zhhqW0FREJuZemg30K1ebNWQ370kOzfsMYSjhSjeeL6Q0lezdspiIuwQ5aCQjYAuzgMsKBdXuuywypzJ5FexZyOj8UxVEpbF0XOFaKbdyN6HV9V/7K20zVqWx9zygNUmlJmMVDrz6KdCYzS5eQPHsSBH8EJ3aLnugbHLYz0jv3xpZclpVto/KRPZQRyZG5bhRIje+9A9/9Vn1d46vR4hpuEZhMAkbTop00TRAiGM2lEgm3tsSgI1t7bGBRBp0RCfKwumAsvv1xs+T9uScLJRiEK6UDTlJN6lZqVPCd3B+AjgSGGk4mmMr0669tEVW9gj+TdhtdbFqTs3ieRqFjsqSvcui0ku0YXYITQJqXZxASF5XsCRlVS9mg2ZgjaMrew/ACWcbZIzORujo6YWfQxwI4YX8GEV/5UEI4QTnJdzClYso4dNt7jWI/nopthUQIuYRvvZYIOeD8WatsAAAE1n8Fj+szBkhQq0aIscbIXxE6qxGdMOaAYMP7T5YfynHPDRRNIGWxP7fVcvzu9ZWazKGY4+Vb/oBUyosM4sCZUr0MX/Nxl088OWKmyDVC0cqEMZqF1+IXX68RKmpKqpMMkmKP12QT2ylbbKtyBGYAAA=";</script>
+</body>
+</html>

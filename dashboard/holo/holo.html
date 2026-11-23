@@ -1,0 +1,46 @@
+<div class="app" id="app">
+ <header class="top" id="top">
+  <span class="word">THALAMUS<i>.</i></span>
+  <div class="tr">
+   <time class="clk" id="clk"></time>
+   <span class="warn" id="warn" role="status" hidden></span>
+   <button class="mb pinj" id="pinJump" type="button" title="Open the pinned task" hidden></button>
+   <button class="mb txt" id="txt" type="button" aria-haspopup="dialog" aria-expanded="false" title="No texts scheduled" aria-label="Your scheduled texts"><span aria-hidden="true">&#9993;</span><b id="txtN"></b></button>
+   <button class="mb" id="low" type="button" aria-pressed="false" aria-label="Low energy" title="Low energy: shorter blocks, softer wording"><span aria-hidden="true">&#9749;</span></button>
+   <button class="mb" id="pow" type="button" aria-pressed="false" aria-label="Low power" title="Low power: stops the animation"><span aria-hidden="true">&#9645;</span></button>
+   <span class="sync" id="sync" role="status"><i class="dot" id="syncDot"></i><span id="syncT">connecting…</span></span>
+  </div>
+ </header>
+
+ <main class="stage" id="stage" aria-label="Sectors">
+  <canvas id="brainCv" aria-hidden="true"></canvas>
+  <svg id="fibres" aria-hidden="true"></svg>
+  <p class="ask" id="ask">// what should i be doing right now?</p>
+  <div id="dials"></div>
+  <div class="sectorl" id="sectorL" hidden></div>
+ </main>
+
+ <div class="chatw" id="chatw">
+  <ul class="auto" id="auto" role="listbox" aria-label="Matching tasks" hidden></ul>
+  <div class="slm" id="slm" hidden><p class="slh">You can say</p><ul id="slmL" role="listbox" aria-label="You can say"></ul><p class="slf">or just ask anything · plain words always work</p></div>
+  <div class="pprev" id="pprev" hidden><p class="slh" id="pprevH"></p><pre id="pprevT"></pre></div>
+  <section class="chatbox" id="chatbox" aria-label="Talk to Thalamus">
+   <button class="idle" id="chatIdle" type="button" aria-controls="conv" aria-expanded="false"><b aria-hidden="true">&gt;</b><span class="it" id="idleT">talk to thalamus</span><span class="ir" id="idleR" hidden></span><kbd id="idleK">/ to type</kbd></button>
+   <div class="conv" id="conv">
+    <div class="msgs" id="msgs" role="log" aria-live="polite" aria-label="Conversation"><div class="mlist" id="msgsIn"></div></div>
+   <div class="cmd" id="term">
+    <form class="field" id="cbar">
+     <span class="pr" aria-hidden="true">&gt;</span>
+     <label class="sr" for="cmdin">Ask or delegate</label>
+     <span class="ghost" id="ghost" aria-hidden="true"></span>
+     <textarea id="cmdin" rows="1" autocomplete="off" autocapitalize="sentences" spellcheck="true" maxlength="4000" placeholder="say anything, or / for ideas"></textarea>
+     <button class="send" id="send" type="submit" aria-label="Send" title="Send (Enter)">&rarr;</button>
+     <button class="cstop" id="chatStop" type="button" aria-label="Stop thinking" title="Stop" hidden><i aria-hidden="true"></i></button>
+    </form>
+   </div>
+   </div>
+  </section>
+ </div>
+ <span class="flyer" id="flyer" aria-hidden="true"></span>
+ <footer class="foot"><span>thalamus v0.5</span><span id="footR"></span></footer>
+</div>

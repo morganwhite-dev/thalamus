@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.morguewhite.priority-brain-launcher</string>
+  <key>ProgramArguments</key><array>
+    <string>/opt/homebrew/bin/python3</string>
+    <string>/Users/morguewhite/Desktop/Projects/priority-brain/launcher/launch_quicktodo.py</string>
+  </array>
+  <key>WatchPaths</key><array>
+    <string>/Users/morguewhite/Desktop/Projects/priority-brain/drop-folder/actions</string>
+    <string>/Users/morguewhite/Desktop/Projects/priority-brain/drop-folder</string>
+  </array>
+  <key>StartInterval</key><integer>3600</integer>
+  <key>ThrottleInterval</key><integer>5</integer>
+  <key>StandardOutPath</key><string>/Users/morguewhite/Desktop/Projects/priority-brain/launcher/launcher.log</string>
+  <key>StandardErrorPath</key><string>/Users/morguewhite/Desktop/Projects/priority-brain/launcher/launcher.log</string>
+</dict></plist>

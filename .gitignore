@@ -1,0 +1,14 @@
+# Personal data, secrets and machine state stay out of version control
+backups/
+drop-folder/
+push/cloud-repo/
+push/config.json
+**/state/
+**/__pycache__/
+*.log
+*.pyc
+.DS_Store
+app/build/
+app/WelcomeLogo.swift
+app/Thalamus.icns
+scripts/private-words.txt

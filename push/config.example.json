@@ -1,0 +1,15 @@
+{
+  "channel": "ntfy",
+  "ntfyServer": "https://ntfy.sh",
+  "ntfyTopic": "your-private-topic-name",
+  "capMinutes": 60,
+  "presenceSeconds": 90,
+  "quietHours": {
+    "start": "22:30",
+    "end": "07:30"
+  },
+  "catchupAfterHours": 6,
+  "staleImportHours": 24,
+  "importLogPath": "~/Library/Containers/<QuickToDo container>/Data/Library/Application Support/AutoImport/import.log",
+  "timezone": "America/New_York"
+}

@@ -1,0 +1,37 @@
+[
+  {
+    "start": "2026-12-01T17:30:00-05:00",
+    "end": "2026-12-01T21:45:00-05:00",
+    "label": "Class: Session 7: Legal and Compliance"
+  },
+  {
+    "start": "2026-12-01T17:30:00-05:00",
+    "end": "2026-12-01T18:00:00-05:00",
+    "label": "Class: Test 6: Cloud Operations"
+  },
+  {
+    "start": "2026-12-03T17:30:00-05:00",
+    "end": "2026-12-03T21:45:00-05:00",
+    "label": "Class: Class 7: AI Security Testing and Hardening"
+  },
+  {
+    "start": "2026-12-04T18:30:00-05:00",
+    "end": "2026-12-04T20:30:00-05:00",
+    "label": "Class: Final Exam (25% of grade)"
+  },
+  {
+    "start": "2026-12-08T17:30:00-05:00",
+    "end": "2026-12-08T21:45:00-05:00",
+    "label": "Class: Session 8: Final Project Presentations"
+  },
+  {
+    "start": "2026-12-10T17:30:00-05:00",
+    "end": "2026-12-10T21:45:00-05:00",
+    "label": "Class: Class 8: AI Incident Response and Forensics"
+  },
+  {
+    "start": "2026-12-10T17:30:00-05:00",
+    "end": "2026-12-10T19:00:00-05:00",
+    "label": "Class: Final Exam"
+  }
+]

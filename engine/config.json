@@ -1,0 +1,279 @@
+{
+  "snapshotPath": "~/Library/Containers/com.morganwhite.QuickTodo/Data/Library/Application Support/BrainSnapshot/brain-snapshot.json",
+  "commitmentsPath": "inputs/commitments.json",
+  "overridesPath": "state/overrides.json",
+  "recommendationPath": "state/recommendation.json",
+  "errorPath": "state/last-error.json",
+  "staleAfterHours": 24,
+  "queueSize": 5,
+  "lowEnergyUrgentHours": 24,
+  "workday": {
+    "start": "09:00",
+    "end": "24:00"
+  },
+  "dayLoadThresholds": {
+    "light": 0.4,
+    "heavy": 0.8
+  },
+  "defaultMinutes": {
+    "Schoolwork": 60,
+    "Internships": 30,
+    "Security": 90,
+    "Personal": 30,
+    "Other": 30,
+    "Play": 30
+  },
+  "categories": [
+    {
+      "name": "Schoolwork",
+      "rank": 1,
+      "hard": true,
+      "lists": [
+        "Cloud Computing",
+        "Network Security"
+      ]
+    },
+    {
+      "name": "Internships",
+      "rank": 2,
+      "hard": true,
+      "lists": [
+        "Internships"
+      ]
+    },
+    {
+      "name": "Security",
+      "rank": 3,
+      "hard": false,
+      "lists": [
+        "Security Projects"
+      ],
+      "focus": true
+    },
+    {
+      "name": "Personal",
+      "rank": 4,
+      "hard": false,
+      "lists": [
+        "Personal"
+      ]
+    },
+    {
+      "name": "Play",
+      "rank": 99,
+      "hard": false,
+      "play": true,
+      "lists": [
+        "Play",
+        "Games",
+        "Side Projects"
+      ]
+    }
+  ],
+  "titleRules": [
+    {
+      "lists": [
+        "General"
+      ],
+      "match": [
+        "apply for",
+        "internship",
+        "job"
+      ],
+      "category": "Internships"
+    },
+    {
+      "lists": [
+        "General"
+      ],
+      "match": [
+        "security project"
+      ],
+      "category": "Security"
+    },
+    {
+      "lists": [
+        "General"
+      ],
+      "match": [
+        "aws",
+        "cloud",
+        "market ready"
+      ],
+      "category": "Schoolwork"
+    }
+  ],
+  "blockMinMinutes": 10,
+  "blockMaxMinutes": 50,
+  "extendMinutes": 15,
+  "expireHours": 8,
+  "breakMinutes": {
+    "light": 45,
+    "normal": 25,
+    "heavy": 10
+  },
+  "play": {
+    "defaultMinutes": 30,
+    "kinds": [
+      {
+        "name": "golf",
+        "minMinutes": 240,
+        "before": "17:00",
+        "anyDay": true,
+        "match": [
+          "golf"
+        ]
+      },
+      {
+        "name": "game",
+        "minMinutes": 90,
+        "tag": "#game",
+        "match": [
+          "game",
+          "games",
+          "gaming",
+          "steam",
+          "xbox",
+          "playstation",
+          "ps5",
+          "nintendo"
+        ],
+        "lists": [
+          "Games"
+        ]
+      },
+      {
+        "name": "project",
+        "minMinutes": 60,
+        "tag": "#project",
+        "lists": [
+          "Side Projects"
+        ]
+      }
+    ],
+    "generic": [
+      {
+        "id": "generic:game",
+        "kind": "game",
+        "title": "a game session",
+        "minMinutes": 90,
+        "text": "Want a game session (about {m})? Your pick of game, totally optional."
+      },
+      {
+        "id": "generic:golf",
+        "kind": "golf",
+        "title": "golf",
+        "minMinutes": 240,
+        "text": "Want to get out for some golf? You have a free stretch and it's still daylight. Totally optional."
+      }
+    ],
+    "projectRoots": [
+      "~/Desktop/Projects",
+      "~/Desktop/Projects/Coding",
+      "~/Desktop/Projects/Portfolio-Projects"
+    ]
+  },
+  "estimateRules": [
+    {
+      "label": "Network Security labs",
+      "lists": [
+        "Network Security"
+      ],
+      "match": [
+        "lab",
+        "labs"
+      ],
+      "minutes": 120
+    },
+    {
+      "label": "Network Security reading",
+      "lists": [
+        "Network Security"
+      ],
+      "match": [
+        "read",
+        "reading"
+      ],
+      "minutes": 90
+    },
+    {
+      "label": "AWS labs",
+      "lists": [
+        "Cloud Computing"
+      ],
+      "match": [
+        "lab",
+        "labs"
+      ],
+      "minutes": 60
+    }
+  ],
+  "lowEnergy": {
+    "blockMaxMinutes": 20,
+    "breakMinutes": {
+      "light": 45,
+      "normal": 30,
+      "heavy": 20
+    }
+  },
+  "lookup": {
+    "roots": [
+      "~/Desktop",
+      "~/Documents",
+      "~/Downloads",
+      "~/OneDrive - Georgia State University",
+      "~/Projects",
+      "~/Code",
+      "~/ClaudeWorkspace",
+      "~/Claude",
+      "~/Screenshots",
+      "~/Pictures"
+    ],
+    "extensions": [
+      "pdf",
+      "pptx",
+      "ppt",
+      "docx",
+      "doc",
+      "html",
+      "md",
+      "txt",
+      "xlsx",
+      "csv",
+      "png",
+      "jpg",
+      "key"
+    ],
+    "maxResults": 12,
+    "maxFiles": 60000,
+    "skipDirs": [
+      ".build",
+      ".venv",
+      "DerivedData",
+      "Library",
+      "Photos Library.photoslibrary",
+      "Pods",
+      "__pycache__",
+      "backups",
+      "build",
+      "dist",
+      "node_modules",
+      "rollback",
+      "site-packages",
+      "state",
+      "venv"
+    ],
+    "maxSeconds": 6,
+    "_rootsNote": "Morgan, 2026-11-10: search her whole home folder, not only the Desktop. Her own folders in this order; the system Library, Applications, Music, Movies and VM folders are left out on purpose (huge and not hers to search)."
+  },
+  "matcher": {
+    "enabled": true,
+    "model": "nomic-embed-text",
+    "prefix": "classification: ",
+    "k": 5,
+    "threshold": 0.85,
+    "margin": 0.02,
+    "timeout_ms": 300,
+    "route_labels": ["now", "schedule", "project", "reminders", "tiny", "general"]
+  }
+}

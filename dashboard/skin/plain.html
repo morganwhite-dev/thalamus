@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Priority Brain</title>
+<script>
+setInterval(function () { var c = document.getElementById("clock"); if (c && !document.hidden) c.textContent = new Date().toLocaleTimeString("en-US", { hour12: true, hour: "numeric", minute: "2-digit", second: "2-digit" }); }, 1000);
+const fmtDur = (m) => { m = Math.round(m); const h = Math.floor(m / 60), r = m % 60; return h && r ? h + " h " + r + " min" : h ? h + " h" : r + " min"; };
+
+// Pick the skin before first paint: the hologram (Thalamus) by default, Plain only when chosen here (remembered in
+// localStorage). The old "thalamus" skin was retired 2026-11-10; a stored "thalamus" now means the hologram.
+(function () {
+  var k = "holo";
+  try { if (localStorage.getItem("thalamusSkin") === "plain") k = "plain"; } catch (e) {}
+  document.documentElement.dataset.skin = k;
+})();
+</script>
+<style>
+html[data-skin="holo"] main{display:none}
+html[data-skin="holo"] body{background:#05061a}
+:root{--bg:#05060f;--card:#0b0e1d;--line:#26304f;--text:#e6ebff;--dim:#9aa6cf;--accent:#7cc4ff;--warn:#ffcf6b;--bad:#ff8a8a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+main{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:18px;margin:0 0 4px;letter-spacing:.05em}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);margin:28px 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.now{border-color:var(--accent)}
+.title{font-size:20px;margin:4px 0}
+.meta{color:var(--dim)}
+.banner{border:1px solid var(--warn);color:var(--warn);border-radius:8px;padding:10px 14px;margin:12px 0}
+.banner.bad{border-color:var(--bad);color:var(--bad)}
+.bar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;color:var(--dim)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button,select{font:inherit;background:#12172b;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer;min-height:36px}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:disabled{opacity:.5;cursor:default}
+button[aria-pressed=true]{border-color:var(--accent);background:#14304a}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.cat b{display:block;font-size:22px}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:4px;padding:0 6px;font-size:12px;color:var(--dim)}
+.tag.esc{border-color:var(--bad);color:var(--bad)}
+.tag.pin{border-color:var(--accent);color:var(--accent)}
+#msg{min-height:1.4em;color:var(--warn)}
+pre.res{white-space:pre-wrap;margin:8px 0 0;color:var(--dim);font:inherit}
+textarea{width:100%;min-height:64px;font:inherit;background:#0f1428;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
+.route{color:var(--dim);font-size:13px;margin-top:8px;word-break:break-word}
+.ans{white-space:pre-wrap;margin:8px 0 0;font:inherit}
+.warn{color:var(--warn)}
+details{margin-top:6px}
+summary{cursor:pointer}
+ol.log{list-style:none;margin:0;padding:0;font-size:13px;color:var(--dim)}
+ol.log li.now{color:var(--accent)}
+.load{margin-top:10px}
+.load .jargon{font-size:16px;color:var(--accent);min-height:1.5em;transition:opacity .4s}
+.load .track{position:relative;height:8px;border:1px solid var(--line);border-radius:6px;background:#0f1428;overflow:hidden;margin:6px 0}
+.load .fill{height:100%;width:0;background:linear-gradient(90deg,#22d3ee,#8b5cf6,#ff7a6b);transition:width .5s ease-out;position:relative}
+.load .fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-100%);animation:sheen 1.6s linear infinite}
+.load.fail .fill{background:var(--bad)}
+.load.fail .fill::after,.load.done .fill::after{animation:none;opacity:0}
+.load .pct{font-variant-numeric:tabular-nums;color:var(--text)}
+@keyframes sheen{to{transform:translateX(100%)}}
+@media (prefers-reduced-motion:reduce){.load .fill::after{animation:none;opacity:0}.load .fill,.load .jargon{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>PRIORITY BRAIN</h1>
+<div class="bar">
+  <time id="clock" style="font-variant-numeric:tabular-nums;font-weight:600"></time>
+  <span id="sync">Loading…</span>
+  <button type="button" id="toHolo">Thalamus view</button>
+  <label><input type="checkbox" id="low"> Low-energy mode</label>
+</div>
+<div id="banners"></div>
+<p id="msg" role="status" aria-live="polite"></p>
+<p id="doneLine" role="status" aria-live="polite"></p>
+
+<section aria-labelledby="h-block">
+  <h2 id="h-block">Work block and breaks</h2>
+  <div id="block" class="card">Loading…</div>
+</section>
+
+<section aria-labelledby="h-now">
+  <h2 id="h-now">Do this now</h2>
+  <div id="now" class="card now">Loading…</div>
+</section>
+
+<section aria-labelledby="h-cmd">
+  <h2 id="h-cmd">Ask or delegate</h2>
+  <div class="card">
+    <form id="cmdForm">
+      <label for="cmdText" class="meta">Ask "what should I do now", or hand over a task. The brain picks the model for you.</label>
+      <textarea id="cmdText" maxlength="4000" placeholder="what's due this week"></textarea>
+      <div class="controls">
+        <label>Save to task <select id="cmdTask" aria-label="Save long answers to this task"><option value="">Auto</option></select></label>
+        <label><input type="checkbox" id="cmdFollow"> Follow up on last answer</label>
+        <button type="submit" id="cmdSend">Send</button>
+        <button type="button" id="cmdStuck">I'm stuck (5-min first step)</button>
+      </div>
+    </form>
+    <div id="cmdOut" role="status" aria-live="polite"></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-next">
+  <h2 id="h-next">Up next</h2>
+  <ul id="queue"></ul>
+</section>
+
+<section aria-labelledby="h-cat">
+  <h2 id="h-cat">Categories</h2>
+  <div id="cats" class="grid"></div>
+</section>
+
+<section aria-labelledby="h-play">
+  <h2 id="h-play">Play</h2>
+  <p class="meta">No deadlines, nothing here is ranked. An offer shows up only on light days.</p>
+  <div id="play" class="card"></div>
+</section>
+
+<section aria-labelledby="h-res">
+  <h2 id="h-res">Saved results by category</h2>
+  <div id="results"></div>
+</section>
+
+<section aria-labelledby="h-log">
+  <h2 id="h-log">Mission log</h2>
+  <ol id="log" class="log"></ol>
+</section>
+
+<section aria-labelledby="h-day">
+  <h2 id="h-day">Today</h2>
+  <div id="day" class="card"></div>
+</section>
+<p class="meta">Done marks the task complete in QuickToDo too (it needs QuickToDo open, and you can undo for 2 minutes).</p>
+</main>
+<script>
+"use strict";
+let busy = false;
+const $ = id => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+  }
+  e.append(...kids);
+  return e;
+};
+const hm = d => d.toLocaleTimeString("en-US", { hour12: true,hour: "numeric", minute: "2-digit"});
+const dueText = iso => iso ? new Date(iso).toLocaleString([], {weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit"}) : "no deadline";
+const setMsg = t => { $("msg").textContent = t; };
+
+async function call(path, opts) {
+  const r = await fetch(path, opts);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+async function load() {
+  try { render(await call("/api/state")); setMsg(""); }
+  catch (e) { setMsg("Lost the thread for a second. Retrying…  // " + e.message); }
+}
+function actionNote(body, before, after) {
+  const all = before ? [before.current, ...(before.queue || [])].filter(Boolean) : [];
+  const t = all.find(x => x.taskId === body.taskId);
+  const name = t ? `"${t.title}"` : "That task";
+  const still = [after.current, ...(after.queue || [])].some(x => x && x.taskId === body.taskId);
+  if (body.action === "skip") return still ? `${name} is overdue, so it can't be hidden.` : `Hidden for today: ${name}.`;
+  if (body.action === "unskip") return `${name} is back in the queue.`;
+  if (body.action === "snooze") {
+    const when = body.until === "tomorrow" ? "until tomorrow" : `for ${body.hours} h`;
+    return still ? `${name} is overdue, so it can't be snoozed.` : `Snoozed ${name} ${when}.`;
+  }
+  if (body.action === "pin") return `Pinned: ${name}.`;
+  if (body.action === "unpin") return `Unpinned ${name}.`;
+  return "";
+}
+let lastState = null;
+async function act(body, path = "/api/action") {
+  if (busy) return;
+  busy = true; document.querySelectorAll("button, select, input").forEach(b => b.disabled = true);
+  try {
+    const before = lastState;
+    const after = await call(path, {method: "POST", headers: {"Content-Type": "application/json", "X-Brain": "1"}, body: JSON.stringify(body)});
+    render(after);
+    setMsg(path === "/api/action" ? actionNote(body, before, after) : "");
+  } catch (e) { setMsg("Hm, that one slipped. Try again?  // " + e.message); await load(); }
+  finally { busy = false; document.querySelectorAll("button, select, input").forEach(b => b.disabled = false); }
+}
+
+function taskControls(t, pinned) {
+  const sel = el("select", {"aria-label": "Snooze " + t.title},
+    el("option", {value: ""}, "Snooze…"),
+    el("option", {value: "1"}, "1 hour"), el("option", {value: "3"}, "3 hours"), el("option", {value: "tomorrow"}, "until tomorrow 9:00"));
+  sel.addEventListener("change", () => {
+    if (!sel.value) return;
+    act(sel.value === "tomorrow" ? {action: "snooze", taskId: t.taskId, until: "tomorrow"} : {action: "snooze", taskId: t.taskId, hours: Number(sel.value)});
+  });
+  return el("div", {class: "controls"},
+    el("button", {"aria-pressed": String(pinned), onclick: () => act({action: pinned ? "unpin" : "pin", taskId: t.taskId})}, pinned ? "Unpin" : "Pin to top"),
+    sel,
+    el("button", {onclick: () => act({action: "skip", taskId: t.taskId})}, "Not this one"),
+    pendingDone(t.taskId)
+      ? el("button", {disabled: "true"}, "Marking done…")
+      : el("button", {onclick: () => act({taskId: t.taskId}, "/api/done")}, "Done"));
+}
+let lastActions = null, pendTimer = null;
+const pendingDone = id => lastActions && (lastActions.pending || []).some(p => p.taskId === id && p.action === "complete");
+function renderDone(a) {
+  lastActions = a || null;
+  const box = $("doneLine"); box.replaceChildren();
+  if (!a) return;
+  const waiting = (a.pending || []).find(p => p.waiting);
+  const r = (a.recent || [])[0];
+  if (waiting) box.append(el("span", {class: "warn"}, `Waiting for QuickToDo to pick up "${waiting.title}". Is it open?`));
+  else if (r && r.processedAt && Date.now() - new Date(r.processedAt) < 120000) {
+    box.append(el("span", {class: r.outcome === "done" || r.outcome === "reopened" ? "" : "warn"}, `${r.text}: "${r.title}"`));
+    if (r.undoable) box.append(" ", el("button", {onclick: () => act({actionId: r.id}, "/api/undo-done")}, "Undo"));
+  }
+  clearTimeout(pendTimer);
+  if ((a.pending || []).length) pendTimer = setTimeout(load, 3000);   // check back quickly while QuickToDo works on it
+}
+function tags(t) {
+  const out = [el("span", {class: "tag"}, t.category)];
+  if (t.band === "escalated") out.push(" ", el("span", {class: "tag esc"}, lastState && lastState.mode && lastState.mode.lowEnergy ? "past due" : "missed deadline"));
+  if (t.band === "pinned") out.push(" ", el("span", {class: "tag pin"}, "pinned"));
+  return out;
+}
+
+function tickTimers() {
+  const e = $("elapsed"), c = $("count");
+  if (e) { const s = Math.max(0, Math.floor((Date.now() - new Date(e.dataset.since)) / 1000)); e.textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+  if (c) { const left = Math.ceil((new Date(c.dataset.at) - Date.now()) / 1000); if (left <= 0) load(); else c.textContent = String(left); }
+}
+const JARGON = ["Sorting the signal from the noise…", "Checking what's actually urgent…", "Skipping the guilt, keeping the facts…", "Pondering…", "Untangling the cortex…", "Wrangling neurons…", "Consulting the thalamus…", "Defragmenting your Tuesday…",
+  "Convincing the amygdala to chill…", "Warming up the synapses…", "Sorting the sticky notes…", "Following the electrical hunch…", "Polishing the thought…"];
+// Percentage: when the router reports a stage, the bar starts at that stage's floor and eases toward its ceiling
+// (never past it until the next stage). Without a stage (queued, or an older job) it falls back to a time estimate.
+function tickLoad() {
+  const box = $("load"); if (!box) return;
+  const queued = box.dataset.queued === "true", d = box.dataset;
+  const s = Math.max(0, (Date.now() - new Date(d.since)) / 1000);
+  let pct, status;
+  if (queued) { pct = 3; status = "waiting in line"; }
+  else if (d.stage) {
+    const lo = Number(d.lo), hi = Number(d.hi), t = Math.max(0, (Date.now() - new Date(d.stageAt || d.since)) / 1000);
+    pct = Math.round(lo + (hi - lo) * (1 - Math.exp(-t / 25)));
+    status = `${d.stage} · ${Math.round(s)} s`;
+    $("loadEst").textContent = "";
+  } else { pct = Math.min(90, Math.round(5 + 85 * (1 - Math.exp(-s / 45)))); status = `running · ${Math.round(s)} s`; }
+  $("loadFill").style.width = pct + "%"; $("loadPct").textContent = pct + "%";
+  $("loadTrack").setAttribute("aria-valuenow", String(pct));
+  $("loadStatus").textContent = status;
+  const jg = $("jargon"), line = JARGON[Math.floor(s / 3) % JARGON.length];
+  if (jg.textContent !== line) jg.textContent = line;
+}
+function tickAll() { tickTimers(); tickLoad(); }
+setInterval(tickAll, 500);
+const blockAct = body => act(body, "/api/block");
+const mins = ms => Math.max(0, Math.ceil(ms / 60000));
+function renderBlock(s) {
+  const box = $("block"), v = s.blocks; box.replaceChildren();
+  if (!v) { box.textContent = "Block state unavailable."; return; }
+  if (v.error) box.append(el("div", {class: "banner bad", role: "alert"}, v.error));
+  const now = new Date(s.serverTime), b = v.block, btn = (label, body) => el("button", {onclick: () => blockAct(body)}, label);
+  const live = el("div", {role: "status", "aria-live": "polite"});
+  box.append(live);
+  if (v.phase === "work") {
+    const end = new Date(b.endsAt);
+    if (v.over) {
+      live.append(el("div", {class: "title"}, b.overReason === "task-done" ? ["// one fewer thing in your head", "// off the pile", "// filed under done"][Math.floor(Date.now() / 1000) % 3] : "Time's up on this block."),
+        el("div", {class: "meta"}, b.title));
+      box.append(el("div", {class: "controls"}, btn(`Take a ${v.breakPreview}-min break`, {action: "take_break"}),
+        btn("Keep going +15 min", {action: "extend"}), btn("Skip the break", {action: "skip_break"})));
+    } else {
+      live.append(el("div", {class: "title"}, "Working: " + b.title),
+        el("div", {class: "title", id: "elapsed", "data-since": b.startedAt}, "0:00"),
+        el("div", {class: "meta"}, `planned ${b.minutes} min, ends ${hm(end)}`));
+      box.append(el("div", {class: "controls"}, btn("Done: take a break", {action: "take_break"}),
+        btn("+15 min", {action: "extend"}), btn("Cancel block", {action: "cancel"})));
+    }
+  } else if (v.phase === "starting") {
+    const at = new Date(b.startsAt), left = Math.max(0, Math.ceil((at - now) / 1000));
+    live.append(el("div", {class: "title", id: "count", "data-at": b.startsAt}, String(left)),
+      el("div", {class: "meta"}, `${b.title} · ${b.minutes} min block`));
+    box.append(el("div", {class: "controls"}, btn("Begin now", {action: "begin_now"}), btn("Cancel", {action: "cancel"})));
+  } else if (v.phase === "break") {
+    const end = new Date(b.endsAt), sug = b.suggestion;
+    live.append(el("div", {class: "title"}, `Break until ${hm(end)} (${b.minutes} min)`),
+      el("div", {}, sug ? "Something from your list: " + sug.title : "Nothing on your Personal list yet. Add things you want to do in QuickToDo."));
+    box.append(el("div", {class: "meta"}, `Sized for a ${b.dayLevel || "normal"} day. About ${mins(end - now)} min left.`),
+      el("div", {class: "controls"}, btn("End break", {action: "end_break"})));
+  } else if (v.phase === "checkin") {
+    const sug = b.suggestion;
+    live.append(el("div", {class: "title"}, "Break's over."), el("div", {}, "Did you do something just for you? (either answer is fine)" + (sug ? ` (${sug.title})` : "")));
+    box.append(el("div", {class: "controls"}, btn("Yes", {action: "checkin", answer: "yes"}),
+      btn("No", {action: "checkin", answer: "no"}), btn("Not now", {action: "checkin", answer: "later"})));
+  } else if (v.phase !== "idle") {
+    live.append(el("div", {class: "title"}, "Fresh data's ready."), el("div", {class: "meta"}, "Reload when you like."));
+    box.append(el("div", {class: "controls"}, el("button", {onclick: () => location.reload()}, "Reload")));
+  } else {
+    const n = v.next;
+    live.append(el("div", {class: "title"}, n ? "Next block: " + n.title : "No block running"),
+      el("div", {class: "meta"}, n ? `${n.category} · ~${fmtDur(n.minutes)} · ${n.why}` : "Nothing needs you right now. That's allowed."));
+    if (v.lastCheckin && v.lastCheckin.answer !== "expired") live.append(el("div", {class: "meta"}, "Last check-in: " + v.lastCheckin.answer));
+    if (n) box.append(el("div", {class: "controls"}, btn("Start this block", {action: "start_work", taskId: n.taskId})));
+  }
+}
+
+const holo = () => document.documentElement.dataset.skin === "holo";
+function setSkin(k) {
+  document.documentElement.dataset.skin = k;
+  try { localStorage.setItem("thalamusSkin", k); } catch (e) {}
+  if (k !== "holo" && window.Holo) Holo.hide();
+  if (k === "holo") { if (window.Holo) Holo.show(lastState); }
+  else load();
+}
+function render(s) {
+  lastState = s;
+  if (holo() && window.Holo) { try { Holo.update(s); } catch (e) { console.error("Holo", e); } }
+  const b = $("banners"); b.replaceChildren();
+  if (!s.current && !s.snapshot) {
+    b.append(el("div", {class: "banner bad", role: "alert"}, "No data yet: " + (s.error || "unknown")));
+    $("now").textContent = "Nothing to show."; return;
+  }
+  const snap = s.snapshot, server = new Date(s.serverTime), gen = new Date(snap.generatedAt);
+  const mins = Math.max(0, Math.round((server - gen) / 60000));
+  $("sync").textContent = `Snapshot synced ${hm(gen)} (${mins < 60 ? mins + " min" : Math.round(mins / 60) + " h"} ago) · refreshed ${hm(server)}`;
+  if (snap.stale) b.append(el("div", {class: "banner", role: "alert"}, "Snapshot is stale. Is QuickToDo running? What you see may be out of date."));
+  if (s.error) b.append(el("div", {class: "banner bad", role: "alert"}, "Couldn't read the latest snapshot; showing the last good recommendation. " + s.error));
+
+  renderDone(s.actions);
+  $("low").checked = !!s.mode.lowEnergy;
+  renderBlock(s);
+
+  const now = $("now"); now.replaceChildren();
+  if (!s.current) {
+    now.append(el("div", {class: "title"}, "Nothing to do right now"), el("div", {class: "meta"}, s.emptyReason || ""));
+  } else {
+    const c = s.current;
+    now.append(el("div", {}, ...tags(c)), el("div", {class: "title"}, c.title),
+      el("div", {class: "meta"}, `${c.list} · due ${dueText(c.dueDate)} · ~${fmtDur(c.minutes)}${c.minutesEstimated ? "" : " (guess)"}`),
+      el("div", {}, "Why this: " + c.why));
+    if (s.leftOff && s.leftOff[c.taskId]) now.append(el("div", {}, "Where you left off: " + s.leftOff[c.taskId].text));
+    if (c.resources) now.append(el("pre", {class: "res"}, c.resources));
+    now.append(taskControls(c, c.band === "pinned"));
+  }
+
+  const q = $("queue"); q.replaceChildren();
+  if (!s.queue.length) q.append(el("li", {class: "meta"}, "Nothing else queued."));
+  for (const t of s.queue) {
+    q.append(el("li", {class: "card"}, el("div", {}, ...tags(t)), el("div", {}, t.title),
+      el("div", {class: "meta"}, `${t.list} · due ${dueText(t.dueDate)} · ~${fmtDur(t.minutes)}`),
+      el("div", {class: "meta"}, t.why), taskControls(t, t.band === "pinned")));
+  }
+
+  const cats = $("cats"); cats.replaceChildren();
+  for (const c of s.categories) {
+    cats.append(el("div", {class: "card cat"}, el("span", {class: "meta"}, c.name), el("b", {}, String(c.open)),
+      el("span", {class: "meta"}, `${c.focusId ? "focus (one at a time)" : "open"}${c.later ? " · " + c.later + " more later" : ""}${c.escalated ? " · " + c.escalated + (lastState && lastState.mode && lastState.mode.lowEnergy ? " past due" : " missed") : ""}${c.dueToday ? " · " + c.dueToday + " due today" : ""}`)));
+  }
+
+  renderPlay(s);
+  renderCommand(s);
+  const d = s.dayLoad, o = s.activeOverrides;
+  $("day").textContent = `Day looks ${d.level}: about ${fmtDur(d.plannedMinutes)} of must-do work, ${fmtDur(d.freeMinutes)} of free time left. Active: ${o.pins} pinned, ${o.snoozes} snoozed, ${o.skips} skipped.`;
+}
+function playLine(placeholder, label, initial, fn) {
+  const inp = el("input", {type: "text", maxlength: "140", placeholder, "aria-label": placeholder});
+  inp.value = initial || "";
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") fn(inp.value); });
+  return el("div", {}, inp, el("button", {type: "button", onclick: () => fn(inp.value)}, label));
+}
+function renderPlay(s) {
+  const box = $("play"), p = s.play || {items: [], projects: [], parking: [], offer: null};
+  if (document.activeElement && box.contains(document.activeElement)) return;   // don't wipe what is being typed
+  box.replaceChildren();
+  const P = body => act(body, "/api/play");
+  const today = () => "Worked on it " + new Date().toLocaleDateString(undefined, {month: "short", day: "numeric"});
+  if (p.offer) {
+    box.append(el("div", {}, el("b", {}, "Offer: "), p.offer.text + (p.offer.leftOff ? " Where you left off: " + p.offer.leftOff : "")),
+      el("button", {type: "button", onclick: () => P({action: "accept", taskId: p.offer.taskId})}, "Sounds good"));
+  }
+  const leftBlock = (id, x) => [x.leftOffAuto ? el("div", {class: "meta"}, x.leftOff + " (automatic)") : "",
+    playLine("where I left off (one line)", "Save", x.leftOffAuto ? "" : x.leftOff, v => P({action: "leftoff", taskId: id, text: v})),
+    el("button", {type: "button", onclick: () => P({action: "leftoff", taskId: id, text: today()})}, "Worked on it today")];
+  for (const x of p.projects || []) {
+    box.append(el("div", {}, el("b", {}, x.title), el("span", {class: "meta"}, x.state === "idea" ? " · idea" : " · started"),
+      ...(x.state === "idea" ? [el("button", {type: "button", onclick: () => P({action: "startproject", id: x.id})}, "Start it")] : leftBlock(x.id, x)),
+      el("button", {type: "button", onclick: () => P({action: "dropproject", id: x.id})}, x.state === "idea" ? "Drop it" : "Finished / drop")));
+  }
+  for (const t of p.items) {
+    box.append(el("div", {}, el("b", {}, t.title), el("span", {class: "meta"}, " · " + t.list), ...leftBlock(t.taskId, t),
+      el("button", {type: "button", onclick: () => act({taskId: t.taskId}, "/api/done")}, "Done")));
+  }
+  for (const h of p.habits || []) {
+    box.append(el("div", {}, el("b", {}, h.title), el("span", {class: "meta"}, " · repeats " + h.cadence + (h.doneToday ? " · done today" : "")),
+      el("button", {type: "button", onclick: () => P({action: h.doneToday ? "habitundo" : "habitdone", id: h.id})}, h.doneToday ? "Undo done" : "Did one today"),
+      el("button", {type: "button", onclick: () => P({action: "drophabit", id: h.id})}, "Stop repeating")));
+  }
+  if (!p.items.length && !(p.projects || []).length && !(p.habits || []).length) box.append(el("div", {class: "meta"}, "No projects yet. Add one below, even half an idea."));
+  box.append(playLine("add a side project, even half an idea", "Add it", "", v => { if (v.trim()) P({action: "park", text: v}); }));
+}
+// ---------------------------------------------------------------- command box (Phase 9)
+let pollTimer = null, taskKey = "";
+function renderJob(j) {
+  const out = $("cmdOut"); out.replaceChildren();
+  if (!j) return;
+  const head = el("div", {class: "meta"}, (j.followUp ? "Follow-up: " : "") + j.input);
+  out.append(head);
+  if (j.status === "queued" || j.status === "running") {
+    const since = new Date(j.startedAt || j.createdAt);
+    out.append(el("div", {class: "load", id: "load", "data-since": since.toISOString(), "data-queued": String(j.status === "queued"),
+      "data-stage": j.stage ? j.stage.label : "", "data-lo": j.stage ? j.stage.lo : "", "data-hi": j.stage ? j.stage.hi : "", "data-stage-at": j.stageAt || ""},
+      el("div", {class: "jargon", id: "jargon", "aria-hidden": "true"}, JARGON[0]),
+      el("div", {class: "track", role: "progressbar", id: "loadTrack", "aria-label": "Estimated progress", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": "0"},
+        el("div", {class: "fill", id: "loadFill"})),
+      el("div", {class: "meta"}, el("span", {class: "pct", id: "loadPct"}, "0%"), el("span", {id: "loadEst"}, " (estimate)"), " · ", el("span", {id: "loadStatus"}, "starting"))));
+    tickLoad();
+    return;
+  }
+  if (j.status === "done") {
+    out.append(el("div", {class: "load done"}, el("div", {class: "track"}, el("div", {class: "fill", style: "width:100%"})), el("div", {class: "meta"}, el("span", {class: "pct"}, "100%"), " done")),
+      el("pre", {class: "ans"}, j.answer || "(empty answer)"));
+    (j.files || []).forEach(f => {
+      const b = el("button", {type: "button"}, "Open " + f.name);
+      b.addEventListener("click", () => call("/api/open", {method: "POST", headers: {"Content-Type": "application/json", "X-Brain": "1"}, body: JSON.stringify({path: f.path})}).catch(e => setMsg("Couldn't open it: " + e.message)));
+      out.append(b);
+    });
+  } else {
+    out.append(el("div", {class: "load fail"}, el("div", {class: "track"}, el("div", {class: "fill", style: "width:" + (j.lastPct || 40) + "%"})),
+      el("div", {class: "meta"}, "Stopped before finishing")), el("div", {class: "warn"}, j.error || "It didn't finish."));
+  }
+  if (j.routing) out.append(el("div", {class: "route"}, "Routing: " + j.routing));
+  for (const w of j.warnings || []) out.append(el("div", {class: "warn"}, w));
+  if (j.savedTo) out.append(el("div", {class: "meta"}, `Saved under "${j.taskTitle}" (${j.taskMatch}).`));
+  if (j.note) out.append(el("div", {class: "meta"}, j.note));
+}
+function setCmdBusy(b) { ["cmdSend", "cmdStuck"].forEach(id => $(id).disabled = b); }
+async function poll(id) {
+  clearTimeout(pollTimer);
+  try {
+    const {job} = await call("/api/command/" + id);
+    renderJob(job);
+    if (job.status === "queued" || job.status === "running") { setCmdBusy(true); pollTimer = setTimeout(() => poll(id), 2000); }
+    else { pollTimer = null; setCmdBusy(false); load(); }
+  } catch (e) { pollTimer = null; setMsg("Lost track of the command: " + e.message); setCmdBusy(false); }
+}
+async function confirmCapture(p) {
+  // Plain page: simple browser dialogs (Thalamus has the real confirm card).
+  if (p.mode === "reminder" && confirm('Text you "' + p.title + '"' + (p.habit ? ", repeating " + p.habit.label + " around " + p.habit.nudgeAt : p.due ? " at " + new Date(p.due).toLocaleString() : "") + "?\nOK = text only (not added to your list). Cancel = choose a list instead.")) {
+    try {
+      if (p.habit) await call("/api/play", {method: "POST", headers: {"Content-Type": "application/json", "X-Brain": "1"}, body: JSON.stringify({action: "addhabit", title: p.title, notes: p.notes || "", days: p.habit.days, nudgeAt: p.habit.nudgeAt, minutes: p.habit.minutes || null, textOnly: true, cluster: "play"})});
+      else if (p.due) await call("/api/play", {method: "POST", headers: {"Content-Type": "application/json", "X-Brain": "1"}, body: JSON.stringify({action: "addreminder", text: p.title, at: p.due})});
+      else { setMsg("When should I text you? Include a time, like 'at 3pm'."); setCmdBusy(false); return; }
+      $("cmdText").value = ""; setMsg("Okay, I'll text you. Not added to your list."); load();
+    } catch (e) { setMsg("Not added: " + e.message); }
+    setCmdBusy(false); return;
+  }
+  let list = p.list;
+  if (!list) {
+    const n = parseInt(prompt("Which list should it go in?\n" + p.lists.map((l, i) => (i + 1) + ". " + l).join("\n")), 10);
+    list = p.lists[n - 1];
+    if (!list) { setMsg("Not added."); setCmdBusy(false); return; }
+  }
+  if (p.habit) {
+    if (!confirm('Repeat "' + p.title + '" ' + p.habit.label + " in " + list + "? One gentle text around " + p.habit.nudgeAt + " if you haven't done it.")) { setMsg("Not added."); setCmdBusy(false); return; }
+    const map = {"play": "play", "side projects": "play", "games": "play", "personal": "personal", "internships": "intern", "security projects": "security", "network security": "school", "cloud computing": "school", "general": "personal"};
+    try {
+      await call("/api/play", {method: "POST", headers: {"Content-Type": "application/json", "X-Brain": "1"}, body: JSON.stringify({action: "addhabit", title: p.title, notes: p.notes || "", days: p.habit.days, nudgeAt: p.habit.nudgeAt, minutes: p.habit.minutes || null, cluster: map[list.toLowerCase()] || "play"})});
+      $("cmdText").value = ""; setMsg("Repeating item added. It shows in the Play section."); load();
+    } catch (e) { setMsg("Not added: " + e.message); }
+    setCmdBusy(false); return;
+  }
+  const when = p.due ? ", due " + new Date(p.due).toLocaleString() : "";
+  const ci = p.checkin && p.due ? p.checkin : null;
+  if (!confirm('Add "' + p.title + '" to ' + list + when + (ci ? ", with a daily check-in around " + ci.nudgeAt + " until the due day" : "") + "?" + (p.hint ? "\n(" + p.hint + ")" : ""))) { setMsg("Not added."); setCmdBusy(false); return; }
+  try {
+    await call("/api/capture/add", {method: "POST", headers: {"Content-Type": "application/json", "X-Brain": "1"}, body: JSON.stringify({title: p.title, list, due: p.due})});
+    if (ci) await call("/api/play", {method: "POST", headers: {"Content-Type": "application/json", "X-Brain": "1"}, body: JSON.stringify({action: "addhabit", title: p.title, until: ci.until, nudgeAt: ci.nudgeAt, days: ci.days, forTask: {title: p.title, list}})});
+    $("cmdText").value = "";
+    setMsg("Adding it. It shows up in QuickToDo in a few seconds." + (ci ? " A daily check-in runs until it is due." : ""));
+    load();
+  } catch (e) { setMsg("Not added: " + e.message); }
+  setCmdBusy(false);
+}
+async function sendCommand(body) {
+  setCmdBusy(true);
+  try {
+    const r = await call("/api/command", {method: "POST", headers: {"Content-Type": "application/json", "X-Brain": "1"}, body: JSON.stringify(body)});
+    if (r.capture) { await confirmCapture(r.capture); return; }
+    const job = r.job;
+    renderJob(job);
+    if (body.text) $("cmdText").value = "";
+    poll(job.id);
+  } catch (e) { setMsg("Command not sent: " + e.message); setCmdBusy(false); }
+}
+$("cmdForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const text = $("cmdText").value.trim();
+  if (!text) { setMsg("Type something first."); return; }
+  sendCommand({text, taskId: $("cmdTask").value || null, followUp: $("cmdFollow").checked});
+});
+$("cmdText").addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) $("cmdForm").requestSubmit(); });
+$("cmdStuck").addEventListener("click", () => {
+  const s = lastState || {}, b = s.blocks && s.blocks.block;
+  const running = s.blocks && (s.blocks.phase === "work" || s.blocks.phase === "starting");
+  const taskId = $("cmdTask").value || (running && b ? b.taskId : null) || (s.current && s.current.taskId);
+  if (!taskId) { setMsg("Pick a task and I'll shrink it for you."); return; }
+  sendCommand({kind: "stuck", taskId});
+});
+function renderCommand(s) {
+  lastState = s;
+  const c = s.command; if (!c) return;
+  const sel = $("cmdTask"), key = c.tasks.map(t => t.taskId).join();
+  if (key !== taskKey) {               // rebuild only when the task list changed, so a choice survives refreshes
+    const keep = sel.value; taskKey = key;
+    sel.replaceChildren(el("option", {value: ""}, "Auto"));
+    let group = null, cat = null;
+    for (const t of c.tasks) {
+      if (t.category !== cat) { cat = t.category; group = el("optgroup", {label: cat}); sel.append(group); }
+      group.append(el("option", {value: t.taskId}, t.title));
+    }
+    sel.value = c.tasks.some(t => t.taskId === keep) ? keep : "";
+  }
+  const banners = $("banners");
+  for (const e of c.errors || []) banners.append(el("div", {class: "banner bad", role: "alert"}, e));
+  const latest = c.jobs[0];
+  if (holo()) { /* the Thalamus (hologram) skin follows jobs itself */ }
+  else if (latest && !pollTimer && (latest.status === "queued" || latest.status === "running")) poll(latest.id);
+  else if (!pollTimer && !$("cmdOut").childElementCount && latest) renderJob(latest);
+  setCmdBusy(!!c.busy);
+
+  const res = $("results"); res.replaceChildren();
+  const cats = Object.keys(c.results);
+  if (!cats.length) res.append(el("p", {class: "meta"}, "Nothing saved yet. Long answers about a task land here."));
+  for (const cat of cats) {
+    const card = el("div", {class: "card"}, el("b", {}, cat));
+    for (const g of c.results[cat]) {
+      const d = el("details", {}, el("summary", {}, `${g.title} (${g.results.length})`));
+      for (const r of g.results) {
+        d.append(el("div", {class: "meta"}, `${new Date(r.at).toLocaleString()} · ${r.input}`),
+          el("pre", {class: "ans"}, r.answer), el("div", {class: "route"}, "Routing: " + r.routing));
+      }
+      card.append(d);
+    }
+    res.append(card);
+  }
+
+  const log = $("log"); log.replaceChildren();
+  for (const r of s.missionLog || []) {
+    log.append(el("li", {class: r.kind === "now" ? "now" : ""}, `${hm(new Date(r.at))}  ${r.text}`));
+  }
+}
+$("low").addEventListener("change", e => act({action: "lowenergy", state: e.target.checked ? "on" : "off"}));
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+setInterval(() => { if (!busy && !document.hidden) load(); }, 30000);
+// Presence: tell the push layer the page is being watched (visible only). Failures are harmless.
+function beat() { if (!document.hidden) fetch("/api/presence", { method: "POST", headers: { "X-Brain": "1" } }).catch(() => {}); }
+beat();
+setInterval(beat, 30000);
+document.addEventListener("visibilitychange", beat);
+$("toHolo").addEventListener("click", () => setSkin("holo"));
+load();
+</script>
+<!--THALAMUS_BUNDLE-->
+<script>
+if (window.Holo) {
+  Holo.onSkin = (k) => setSkin(k);
+  if (holo()) Holo.show(null);
+}
+</script>
+</body>
+</html>
